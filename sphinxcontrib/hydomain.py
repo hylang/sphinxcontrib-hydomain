@@ -680,6 +680,18 @@ class HyClassMethod(HyMethod):
         return super().run()
 
 
+class HyStaticMethod(HyMethod):
+    """Description of a classmethod."""
+
+    option_spec = HyObject.option_spec.copy()
+
+    def run(self) -> List[Node]:
+        self.name = 'hy:method'
+        self.options['staticmethod'] = True
+
+        return super().run()
+
+
 class HyAttribute(HyObject):
     """Description of an attribute."""
 
@@ -744,7 +756,7 @@ class HyDomain(Domain):
         "exception": HyClass,
         "method": HyMethod,
         'classmethod':     HyClassMethod,
-        # 'staticmethod':    PyStaticMethod,
+        'staticmethod':    HyStaticMethod,
         "attribute": HyAttribute,
         "currentmodule": HyCurrentModule,
         # 'decorator':       PyDecoratorFunction,

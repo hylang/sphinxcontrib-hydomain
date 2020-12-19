@@ -17,6 +17,8 @@ Hy Domain
 
    .. hy:classmethod:: (duplicate)
 
+   .. hy:staticmethod:: (manhattan-distance [a b])
+
    .. hy:method:: (distance [^Point other])
 
       * Link to :hy:meth:`midpoint`
@@ -95,7 +97,7 @@ Python Domain
 
    .. py:classmethod:: duplicate()
 
-   .. py:staticmethod:: manhattan-distance(a, b)
+   .. py:staticmethod:: manhattan_distance(a, b)
 
    .. py:method:: distance(other: Point)
 
