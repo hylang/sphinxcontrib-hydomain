@@ -5,39 +5,31 @@ import re
 import sys
 from inspect import Parameter
 from pprint import pp as _pp
-from typing import List, Tuple, cast, Any, Dict, Iterator, Iterable
+from typing import Any, Dict, Iterator, List, Tuple, cast
 
+import astor
 import hy
 from docutils import nodes
 from docutils.nodes import Element, Node
-from sphinx.util.docutils import SphinxDirective
-from pygments.lexer import RegexLexer, bygroups
-from pygments.token import Keyword, Literal, Name, Number, Operator, Text
-from pygments.util import ClassNotFound
 from sphinx import addnodes
-from sphinx.addnodes import desc_parameterlist, pending_xref, desc_signature
-from sphinx.directives import ObjectDescription, directives
-from sphinx.domains import Domain, Index, ObjType, IndexEntry
+from sphinx.addnodes import desc_signature, pending_xref
+from sphinx.directives import directives
+from sphinx.domains import Domain, ObjType
 from sphinx.domains.python import (
-    pairindextypes,
-    PyModule,
-    PythonModuleIndex,
-    PyField,
-    PyGroupedField,
-    PyObject,
-    PyTypedField,
-    ObjectEntry,
     ModuleEntry,
+    ObjectEntry,
+    PyModule,
+    PyObject,
+    PythonModuleIndex,
+    pairindextypes,
 )
 from sphinx.environment import BuildEnvironment
 from sphinx.locale import _, __
 from sphinx.pycode.ast import parse as ast_parse
 from sphinx.roles import XRefRole
-from sphinx.util.docfields import Field, GroupedField, TypedField
+from sphinx.util.docutils import SphinxDirective
 from sphinx.util.inspect import signature_from_ast
-from sphinx.util.nodes import make_refnode, make_id
-import astor
-
+from sphinx.util.nodes import make_id, make_refnode
 
 # ** Consts
 logging.getLogger().setLevel(logging.DEBUG)
