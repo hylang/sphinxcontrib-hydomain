@@ -29,7 +29,12 @@ Hy Domain
 
    .. hy:method:: (same? [^Point other])
 
-      * Link to :hy:meth:`coordinates.Point.distance`
+      * Link to :hy:meth:`coordinates.Point.as-origin`
+
+
+   .. hy:decoratormethod:: (as-origin)
+
+      * Link to :hy:meth:`distance`
 
    .. hy:method:: distance-to-origin
       :property:
@@ -64,6 +69,8 @@ Hy Domain
    :param x: param x
    :param y: param y
    :returns: some numbers
+
+.. hy:decorator:: (with_origin [point])
 
 .. hy:attribute:: origin
 
@@ -109,7 +116,11 @@ Python Domain
 
    .. py:method:: is_same(other: Point)
 
-      * Link to :py:meth:`coordinates.Point.distance`
+      * Link to :py:meth:`coordinates.Point.as_origin`
+
+   .. py:decoratormethod:: as_origin()
+
+      * Link to :py:meth:`distance`
 
    .. py:method:: distance_to_origin
       :property:
@@ -145,6 +156,8 @@ Python Domain
    :param y: param y
    :returns: some numbers
 
+.. py:decorator:: with_origin(point)
+
 .. py:attribute:: origin
 
    :type: Vector
@@ -162,5 +175,3 @@ Python Domain
 .. py:module:: object
 
 .. py:function:: sum(*nums)
-
-.. py:decorator:: with_origin(point)

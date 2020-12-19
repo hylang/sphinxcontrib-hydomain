@@ -311,7 +311,9 @@ class HyObject(PyObject):
         # determine module and class name (if applicable), as well as full name
         modname = self.options.get("module", self.env.ref_context.get("hy:module"))
         classname = self.env.ref_context.get("hy:class")
-        should_wrap = (not isvar or self.objtype in {"function", "method"}) and "property" not in self.options
+        should_wrap = (
+            not isvar or self.objtype in {"function", "method"}
+        ) and "property" not in self.options
 
         if classname:
             add_module = False
@@ -485,10 +487,7 @@ class HyVariable(HyObject):
     option_spec = HyObject.option_spec.copy()
 
     option_spec.update(
-        {
-            "type": directives.unchanged,
-            "value": directives.unchanged,
-        }
+        {"type": directives.unchanged, "value": directives.unchanged,}
     )
 
     def handle_signature(self, sig: str, signode: desc_signature) -> Tuple[str, str]:
@@ -560,9 +559,7 @@ class HyClass(HyObject):
 
     option_spec = HyObject.option_spec.copy()
     option_spec.update(
-        {
-            "final": directives.flag,
-        }
+        {"final": directives.flag,}
     )
 
     allow_nesting = True
@@ -674,8 +671,8 @@ class HyClassMethod(HyMethod):
     option_spec = HyObject.option_spec.copy()
 
     def run(self) -> List[Node]:
-        self.name = 'hy:method'
-        self.options['classmethod'] = True
+        self.name = "hy:method"
+        self.options["classmethod"] = True
 
         return super().run()
 
@@ -686,8 +683,8 @@ class HyStaticMethod(HyMethod):
     option_spec = HyObject.option_spec.copy()
 
     def run(self) -> List[Node]:
-        self.name = 'hy:method'
-        self.options['staticmethod'] = True
+        self.name = "hy:method"
+        self.options["staticmethod"] = True
 
         return super().run()
 
@@ -697,10 +694,7 @@ class HyAttribute(HyObject):
 
     option_spec = PyObject.option_spec.copy()
     option_spec.update(
-        {
-            "type": directives.unchanged,
-            "value": directives.unchanged,
-        }
+        {"type": directives.unchanged, "value": directives.unchanged,}
     )
 
     def handle_signature(self, sig: str, signode: desc_signature) -> Tuple[str, str]:
@@ -732,6 +726,39 @@ class HyAttribute(HyObject):
         return _("%s (%s attribute)") % (attrname, clsname)
 
 
+class HyDecoratorFunction(HyFunction):
+    """Description of a decorator."""
+
+    def run(self) -> List[Node]:
+        # a decorator function is a function after all
+        self.name = "hy:function"
+        return super().run()
+
+    def handle_signature(self, sig: str, signode: desc_signature) -> Tuple[str, str]:
+        ret = super().handle_signature(sig, signode)
+        signode.insert(0, addnodes.desc_addname("#@", "#@"))
+        return ret
+
+    def needs_arglist(self) -> bool:
+        return False
+
+
+class HyDecoratorMethod(HyMethod):
+    """Description of a decoratormethod."""
+
+    def run(self) -> List[Node]:
+        self.name = "hy:method"
+        return super().run()
+
+    def handle_signature(self, sig: str, signode: desc_signature) -> Tuple[str, str]:
+        ret = super().handle_signature(sig, signode)
+        signode.insert(0, addnodes.desc_addname("#@", "#@"))
+        return ret
+
+    def needs_arglist(self) -> bool:
+        return False
+
+
 class HyDomain(Domain):
     name = "hy"
     label = "HY"
@@ -755,12 +782,12 @@ class HyDomain(Domain):
         "class": HyClass,
         "exception": HyClass,
         "method": HyMethod,
-        'classmethod':     HyClassMethod,
-        'staticmethod':    HyStaticMethod,
+        "classmethod": HyClassMethod,
+        "staticmethod": HyStaticMethod,
         "attribute": HyAttribute,
         "currentmodule": HyCurrentModule,
-        # 'decorator':       PyDecoratorFunction,
-        # 'decoratormethod': PyDecoratorMethod,
+        "decorator": HyDecoratorFunction,
+        "decoratormethod": HyDecoratorMethod,
     }
 
     roles = {
