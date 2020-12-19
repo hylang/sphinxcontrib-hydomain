@@ -312,8 +312,6 @@ class HyObject(PyObject):
         modname = self.options.get("module", self.env.ref_context.get("hy:module"))
         classname = self.env.ref_context.get("hy:class")
         should_wrap = (not isvar or self.objtype in {"function", "method"}) and "property" not in self.options
-        if should_wrap:
-            signode += addnodes.desc_addname("(", "(")
 
         if classname:
             add_module = False
@@ -344,6 +342,10 @@ class HyObject(PyObject):
         sig_prefix = self.get_signature_prefix(sig)
         if sig_prefix:
             signode += addnodes.desc_annotation(sig_prefix, sig_prefix)
+
+        if should_wrap:
+            signode += addnodes.desc_addname("(", "(")
+
         if prefix:
             signode += addnodes.desc_addname(prefix, prefix)
         elif add_module and self.env.config.add_module_names:
@@ -666,6 +668,18 @@ class HyCurrentModule(SphinxDirective):
         return []
 
 
+class HyClassMethod(HyMethod):
+    """Description of a classmethod."""
+
+    option_spec = HyObject.option_spec.copy()
+
+    def run(self) -> List[Node]:
+        self.name = 'hy:method'
+        self.options['classmethod'] = True
+
+        return super().run()
+
+
 class HyAttribute(HyObject):
     """Description of an attribute."""
 
@@ -729,7 +743,7 @@ class HyDomain(Domain):
         "class": HyClass,
         "exception": HyClass,
         "method": HyMethod,
-        # 'classmethod':     PyClassMethod,
+        'classmethod':     HyClassMethod,
         # 'staticmethod':    PyStaticMethod,
         "attribute": HyAttribute,
         "currentmodule": HyCurrentModule,

@@ -14,6 +14,9 @@ Hy Domain
    * Link to :hy:meth:`distance`
    * Link to :hy:meth:`Point.midpoint`
 
+
+   .. hy:classmethod:: (duplicate)
+
    .. hy:method:: (distance [^Point other])
 
       * Link to :hy:meth:`midpoint`
@@ -80,40 +83,47 @@ Hy Domain
 
 Python Domain
 ^^^^^^^^^^^^^^^
-.. py:module:: module_a.submodule
 
-* Link to :py:class:`ModTopLevel`
+.. py:module:: coordinates
 
-.. py:class:: ModTopLevel
+* Link to :py:class:`Point`
 
-    * Link to :py:meth:`mod_child_1`
-    * Link to :py:meth:`ModTopLevel.mod_child_1`
+.. py:class:: Point(x y)
 
-.. py:method:: ModTopLevel.mod_child_1
+   * Link to :py:meth:`distance`
+   * Link to :py:meth:`Point.midpoint`
 
-    * Link to :py:meth:`mod_child_2`
+   .. py:classmethod:: duplicate()
 
-.. py:method:: ModTopLevel.mod_child_2
+   .. py:method:: distance(other: Point)
 
-    * Link to :py:meth:`module_a.submodule.ModTopLevel.mod_child_1`
+      * Link to :py:meth:`midpoint`
 
-.. py:method:: ModTopLevel.prop
-   :property:
+   .. py:method:: midpoint(other: Point)
 
-   * Link to :py:attr:`prop attribute <.prop>`
-   * Link to :py:meth:`prop method <.prop>`
+      * Link to :py:meth:`coordinates.Point.is_same`
+
+   .. py:method:: is_same(other: Point)
+
+      * Link to :py:meth:`coordinates.Point.distance`
+
+   .. py:method:: distance_to_origin
+      :property:
+
+   * Link to :py:attr:`prop attribute <.distance_to_origin>`
+   * Link to :py:meth:`prop method <.distance_to_origin>`
 
 .. py:currentmodule:: None
 
-.. py:class:: ModNoModule
+.. py:class:: PointNoModule
 
-.. py:module:: module_b.submodule
+.. py:module:: coordinates.submodule
 
-* Link to :py:class:`ModTopLevel`
+* Link to :py:class:`Vector`
 
-.. py:class:: ModTopLevel
+.. py:class:: Vector(x, y, z)
 
-    * Link to :py:class:`ModNoModule`
+   * Link to :py:class:`PointNoModule`
 
 .. py:function:: foo(x, y)
 
@@ -121,13 +131,19 @@ Python Domain
    :type  x: int
    :param y: param y
    :type  y: tuple(str, float)
+   :returns: some numbers
    :rtype:   list
+
 
 .. py:function:: bar(x: int, y: Tuple[str, float]) -> list
 
-.. py:attribute:: attr1
+   :param x: param x
+   :param y: param y
+   :returns: some numbers
 
-   :type: ModTopLevel
+.. py:attribute:: origin
+
+   :type: Vector
 
 .. py:attribute:: attr2
 
@@ -137,6 +153,8 @@ Python Domain
 
 .. py:exception:: Exception
 
+.. py:exception:: ValueError(message)
+
 .. py:module:: object
 
-.. py:function:: sum()
+.. py:function:: sum(*nums)
