@@ -1,3 +1,17 @@
+"""
+    sphinxcontrib.hydomain
+    ~~~~~~~~~~~~~~~~~~~~~
+    The Hy domain.
+
+    Converted from the Python domain created by the Sphinx team
+    by Allison Casey
+
+    Original Sphinx Copyright
+
+    :copyright: Copyright 2007-2020 by the Sphinx team, see AUTHORS.
+    :license: BSD, see LICENSE for details.
+"""
+
 import ast
 import inspect
 import logging
