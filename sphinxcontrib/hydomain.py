@@ -796,6 +796,11 @@ class HyDomain(Domain):
         "class": HyXRefRole(),
         "meth": HyXRefRole(),
         "attr": HyXRefRole(),
+        "exc": HyXRefRole(),
+        "class": HyXRefRole(),
+        "const": HyXRefRole(),
+        "mod": HyXRefRole(),
+        "obj": HyXRefRole(),
     }
 
     initial_data = {"objects": {}, "modules": {}}
