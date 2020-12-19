@@ -162,3 +162,5 @@ Python Domain
 .. py:module:: object
 
 .. py:function:: sum(*nums)
+
+.. py:decorator:: with_origin(point)
