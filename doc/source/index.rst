@@ -95,6 +95,8 @@ Python Domain
 
    .. py:classmethod:: duplicate()
 
+   .. py:staticmethod:: manhattan-distance(a, b)
+
    .. py:method:: distance(other: Point)
 
       * Link to :py:meth:`midpoint`
