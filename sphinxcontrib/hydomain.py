@@ -311,7 +311,8 @@ class HyObject(PyObject):
         # determine module and class name (if applicable), as well as full name
         modname = self.options.get("module", self.env.ref_context.get("hy:module"))
         classname = self.env.ref_context.get("hy:class")
-        if not isvar:
+        should_wrap = (not isvar or self.objtype in {"function", "method"}) and "property" not in self.options
+        if should_wrap:
             signode += addnodes.desc_addname("(", "(")
 
         if classname:
@@ -377,7 +378,7 @@ class HyObject(PyObject):
         if anno:
             signode += addnodes.desc_annotation(" " + anno, " " + anno)
 
-        if not isvar:
+        if should_wrap:
             signode += addnodes.desc_addname(")", ")")
         return fullname, prefix
 
@@ -976,15 +977,16 @@ class HyDomain(Domain):
 
 # ** Node Renderers
 def v_hyparameterlist(self, node):
-    pp(dir(node))
     self.first_param = True
-    self.body.append(" ")
-    self.body.append("[")
+    if len(node):
+        self.body.append(" ")
+        self.body.append("[")
     self.param_separator = node.child_text_separator
 
 
 def d_hyparameterlist(self, node):
-    self.body.append("]")
+    if len(node):
+        self.body.append("]")
 
 
 def v_html_hyparameter(self, node):
