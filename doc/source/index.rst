@@ -3,6 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+
+
 Hy Domain
 ^^^^^^^^^^^^^^^
 
@@ -23,7 +25,6 @@ Hy Domain
    * Link to :hy:meth:`distance`
    * Link to :hy:meth:`Point.midpoint`
 
-
    .. hy:classmethod:: (duplicate)
 
    .. hy:staticmethod:: (manhattan-distance [a b])
@@ -39,7 +40,6 @@ Hy Domain
    .. hy:method:: (same? [^Point other])
 
       * Link to :hy:meth:`coordinates.Point.as-origin`
-
 
    .. hy:decoratormethod:: (as-origin)
 
@@ -79,7 +79,7 @@ Hy Domain
    :param y: param y
    :returns: some numbers
 
-.. hy:decorator:: (with_origin [point])
+.. hy:decorator:: (with-origin [point])
 
 .. hy:attribute:: origin
 
