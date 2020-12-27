@@ -5,6 +5,15 @@
 
 Hy Domain
 ^^^^^^^^^^^^^^^
+
+.. hy:autofunction:: dummy_module.a-func?
+
+.. autofunction:: dummy_py_module.bar
+
+.. hy:function:: (dummy_module.b-func ^int [a b])
+
+   Hello World!
+
 .. hy:module:: coordinates
 
 * Link to :hy:class:`Point`

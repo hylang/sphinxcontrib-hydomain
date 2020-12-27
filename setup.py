@@ -2,7 +2,8 @@ from setuptools import setup, find_packages
 from pathlib import Path
 
 requires = [
-    "Sphinx >= 3.3"
+    "Sphinx >= 3.3",
+    "hy >= 0.19",
 ]
 
 def readme():

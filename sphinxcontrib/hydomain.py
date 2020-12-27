@@ -44,6 +44,7 @@ from sphinx.roles import XRefRole
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.inspect import signature_from_ast
 from sphinx.util.nodes import make_id, make_refnode
+import sphinxcontrib.hy_documenters as doc
 
 # ** Consts
 logging.getLogger().setLevel(logging.DEBUG)
@@ -1099,3 +1100,6 @@ def setup(app):
     app.add_node(desc_hyparameterlist, html=(v_hyparameterlist, d_hyparameterlist))
     app.add_node(desc_hyparameter, html=(v_html_hyparameter, d_html_hyparameter))
     app.add_node(desc_hyannotation, html=(v_html_hyannotation, d_html_hyannotation))
+
+    app.registry.add_documenter("hy:function", doc.HyFunctionDocumenter)
+    app.add_directive_to_domain("hy", "autofunction", doc.HyAutodocDirective)
