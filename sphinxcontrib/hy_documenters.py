@@ -1,19 +1,26 @@
 import logging
 import re
+import sys
 import traceback
 from inspect import getfullargspec
-from itertools import starmap, islice
+from itertools import islice, starmap
 from pprint import pp
-from typing import Any, Callable, List, Optional, TypeVar
-from docutils.statemachine import StringList
-import sys
+from typing import Any, Callable, List, Optional, Tuple, TypeVar
 
 import hy
 from docutils.nodes import Node
+from docutils.statemachine import StringList
 from sphinx import version_info
+from sphinx.ext.autodoc import ALL, INSTANCEATTR
 from sphinx.ext.autodoc import Documenter as PyDocumenter
 from sphinx.ext.autodoc import FunctionDocumenter as PyFunctionDocumenter
+from sphinx.ext.autodoc import MethodDocumenter as PyMethodDocumenter
+from sphinx.ext.autodoc import ClassDocumenter as PyClassDocumenter
 from sphinx.ext.autodoc import ModuleDocumenter as PyModuleDocumenter
+from sphinx.ext.autodoc import PropertyDocumenter as PyPropertyDocumenter
+from sphinx.ext.autodoc import AttributeDocumenter as PyAttributeDocumenter
+from sphinx.ext.autodoc import DecoratorDocumenter as PyDecoratorDocumenter
+from sphinx.ext.autodoc import ObjectMember, ObjectMembers, special_member_re
 from sphinx.ext.autodoc.directive import (
     AutodocDirective,
     DocumenterBridge,
@@ -21,21 +28,25 @@ from sphinx.ext.autodoc.directive import (
     parse_generated_content,
     process_documenter_options,
 )
-from sphinx.ext.autodoc.importer import import_module
+from sphinx.ext.autodoc.importer import Attribute, import_module
 from sphinx.ext.autodoc.mock import mock
 from sphinx.pycode import ModuleAnalyzer, PycodeError
-from sphinx.util.inspect import safe_getattr
+from sphinx.util import inspect
+from sphinx.util.docstrings import extract_metadata
+from sphinx.util.inspect import (
+    getall,
+    getannotations,
+    getdoc,
+    getmro,
+    getslots,
+    isenumclass,
+    safe_getattr,
+)
 from sphinx.util.typing import is_system_TypeVar
 
 logging.getLogger().setLevel(logging.DEBUG)
 
 logger = logging.getLogger("hy-domain")
-
-
-def plog(*args):
-    for arg in args:
-        pp(arg)
-
 
 hy_ext_sig_re = re.compile(
     r"""^\(
@@ -57,6 +68,78 @@ hy_var_sig_re = re.compile(
         $""",
     re.VERBOSE,
 )
+
+NoneType = type(None)
+
+
+def plog(*args):
+    pp("----------------------")
+    for arg in args:
+        pp(arg)
+    pp("----------------------")
+
+
+def get_object_members(subject: Any, objpath: List[str], attrgetter, analyzer=None):
+    """Get members and attributes of target object."""
+    from sphinx.ext.autodoc import INSTANCEATTR
+
+    # the members directly defined in the class
+    obj_dict = attrgetter(subject, "__dict__", {})
+
+    members = {}  # type: Dict[str, Attribute]
+
+    # enum members
+    if isenumclass(subject):
+        for name, value in subject.__members__.items():
+            if name not in members:
+                members[name] = Attribute(name, True, value)
+
+        superclass = subject.__mro__[1]
+        for name in obj_dict:
+            if name not in superclass.__dict__:
+                value = safe_getattr(subject, name)
+                members[name] = Attribute(name, True, value)
+
+    # members in __slots__
+    try:
+        __slots__ = getslots(subject)
+        if __slots__:
+            from sphinx.ext.autodoc import SLOTSATTR
+
+            for name in __slots__:
+                members[name] = Attribute(name, True, SLOTSATTR)
+    except (AttributeError, TypeError, ValueError):
+        pass
+
+    # other members
+    for name in dir(subject):
+        try:
+            value = attrgetter(subject, name)
+            directly_defined = name in obj_dict
+            name = hy.unmangle(name)
+            if name and name not in members:
+                members[name] = Attribute(name, directly_defined, value)
+        except AttributeError:
+            continue
+
+    # annotation only member (ex. attr: int)
+    for i, cls in enumerate(getmro(subject)):
+        try:
+            for name in getannotations(cls):
+                name = unmangle(cls, name)
+                if name and name not in members:
+                    members[name] = Attribute(name, i == 0, INSTANCEATTR)
+        except AttributeError:
+            pass
+
+    if analyzer:
+        # append instance attributes (cf. self.attr1) if analyzer knows
+        namespace = ".".join(objpath)
+        for (ns, name) in analyzer.find_attr_docs():
+            if namespace == ns and name not in members:
+                members[name] = Attribute(name, True, INSTANCEATTR)
+
+    return members
 
 
 def match_hy_sig(s: str) -> tuple:
@@ -149,8 +232,6 @@ def import_object(
         raise ImportError(errmsg) from exc
 
 
-NoneType = type(None)
-
 def stringify(annotation: Any) -> str:
     """Stringify type annotation object."""
     from sphinx.util import inspect  # lazy loading
@@ -169,12 +250,13 @@ def stringify(annotation: Any) -> str:
     elif not annotation:
         return repr(annotation)
     elif annotation is NoneType:
-        return 'None'
-    elif (getattr(annotation, '__module__', None) == 'builtins' and
-          hasattr(annotation, '__qualname__')):
+        return "None"
+    elif getattr(annotation, "__module__", None) == "builtins" and hasattr(
+        annotation, "__qualname__"
+    ):
         return annotation.__qualname__
     elif annotation is Ellipsis:
-        return '...'
+        return "..."
 
     if sys.version_info >= (3, 7):  # py37+
         return _stringify_py37(annotation)
@@ -184,19 +266,19 @@ def stringify(annotation: Any) -> str:
 
 def _stringify_py37(annotation: Any) -> str:
     """stringify() for py37+."""
-    module = getattr(annotation, '__module__', None)
-    if module == 'typing':
-        if getattr(annotation, '_name', None):
+    module = getattr(annotation, "__module__", None)
+    if module == "typing":
+        if getattr(annotation, "_name", None):
             qualname = annotation._name
-        elif getattr(annotation, '__qualname__', None):
+        elif getattr(annotation, "__qualname__", None):
             qualname = annotation.__qualname__
-        elif getattr(annotation, '__forward_arg__', None):
+        elif getattr(annotation, "__forward_arg__", None):
             qualname = annotation.__forward_arg__
         else:
             qualname = stringify(annotation.__origin__)  # ex. Union
-    elif hasattr(annotation, '__qualname__'):
-        qualname = '%s.%s' % (module, annotation.__qualname__)
-    elif hasattr(annotation, '__origin__'):
+    elif hasattr(annotation, "__qualname__"):
+        qualname = "%s.%s" % (module, annotation.__qualname__)
+    elif hasattr(annotation, "__origin__"):
         # instantiated generic provided by a user
         qualname = stringify(annotation.__origin__)
     else:
@@ -204,42 +286,45 @@ def _stringify_py37(annotation: Any) -> str:
         # only make them appear twice
         return repr(annotation)
 
-    if getattr(annotation, '__args__', None):
+    if getattr(annotation, "__args__", None):
         if not isinstance(annotation.__args__, (list, tuple)):
             # broken __args__ found
             pass
-        elif qualname == 'Union':
+        elif qualname == "Union":
             if len(annotation.__args__) > 1 and annotation.__args__[-1] is NoneType:
                 if len(annotation.__args__) > 2:
-                    args = ', '.join(stringify(a) for a in annotation.__args__[:-1])
-                    return '(of Optional (of Union %s))' % args
+                    args = ", ".join(stringify(a) for a in annotation.__args__[:-1])
+                    return "(of Optional (of Union %s))" % args
                 else:
-                    return '(of Optional %s)' % stringify(annotation.__args__[0])
+                    return "(of Optional %s)" % stringify(annotation.__args__[0])
             else:
-                args = ', '.join(stringify(a) for a in annotation.__args__)
-                return '(of Union %s)' % args
-        elif qualname == 'Callable':
-            args = ', '.join(stringify(a) for a in annotation.__args__[:-1])
+                args = ", ".join(stringify(a) for a in annotation.__args__)
+                return "(of Union %s)" % args
+        elif qualname == "Callable":
+            args = ", ".join(stringify(a) for a in annotation.__args__[:-1])
             returns = stringify(annotation.__args__[-1])
-            return '%(of %s [%s] %s)' % (qualname, args, returns)
-        elif str(annotation).startswith('typing.Annotated'):  # for py39+
+            return "%(of %s [%s] %s)" % (qualname, args, returns)
+        elif str(annotation).startswith("typing.Annotated"):  # for py39+
             return stringify(annotation.__args__[0])
         elif all(is_system_TypeVar(a) for a in annotation.__args__):
             # Suppress arguments if all system defined TypeVars (ex. Dict[KT, VT])
             return qualname
         else:
-            args = ' '.join(stringify(a) for a in annotation.__args__)
-            return '(of %s %s)' % (qualname, args)
+            args = " ".join(stringify(a) for a in annotation.__args__)
+            return "(of %s %s)" % (qualname, args)
 
     return qualname
 
 
-def signature(obj):
+def signature(obj, bound_method=False):
     argspec = getfullargspec(obj)
     args = [
         (arg,)
         for arg in argspec.args[: len(argspec.args) - (len(argspec.defaults or []))]
     ]
+    if bound_method:
+        if len(args) > 0:
+            args.pop(0)
     defaults = islice(argspec.args, len(args or []), None)
     defaults = list(zip(defaults, argspec.defaults or []))
 
@@ -266,7 +351,11 @@ def signature(obj):
         ann = argspec.annotations.get(arg)
         ann = stringify(ann) if ann is not None else ""
         arg = hy.unmangle(str(arg))
-        return (f"^{ann} {arg}" if ann else arg) if default is None else f"^{ann} [{arg} {default}]"
+        return (
+            (f"^{ann} {arg}" if ann else arg)
+            if default is None
+            else f"^{ann} [{arg} {default}]"
+        )
 
     def format_section(args, opener):
         if not args:
@@ -284,6 +373,40 @@ def signature(obj):
     retann = stringify(retann) + " " if retann is not None else ""
 
     return f"^{retann} [{arg_string}]" if retann else f"[{arg_string}]"
+
+
+def get_module_members(module: Any):
+    """Get members of target module."""
+    from sphinx.ext.autodoc import INSTANCEATTR
+
+    members = {}
+    for name in dir(module):
+        try:
+            value = safe_getattr(module, name, None)
+            name = hy.unmangle(name)
+            members[name] = (name, value)
+        except AttributeError:
+            continue
+
+    # annotation only member (ex. attr: int)
+    try:
+        for name in getannotations(module):
+            if name not in members:
+                members[name] = (name, INSTANCEATTR)
+    except AttributeError:
+        pass
+
+    return sorted(list(members.values()))
+
+
+def is_hy(member, membername, parent):
+    return type(parent) in {
+        HyDocumenter,
+        HyModuleDocumenter,
+        HyFunctionDocumenter,
+        HyMethodDocumenter,
+        HyClassDocumenter,
+    }
 
 
 class HyAutodocDirective(AutodocDirective):
@@ -325,8 +448,7 @@ class HyAutodocDirective(AutodocDirective):
             # an option is either unknown or has a wrong type
             logger.error(
                 "An option to %s is either unknown or has an invalid value: %s"
-                % (self.name, exc),
-                location=(self.env.docname, lineno),
+                % (self.name, exc)
             )
             return []
 
@@ -452,11 +574,227 @@ class HyDocumenter(PyDocumenter):
             # etc. don't support a prepended module name
             self.add_line("   :module: %s" % self.modname, sourcename)
 
+    def document_members(self, all_members=False):
+        """Generate reST for member documentation.
+        If *all_members* is True, do all members, else those given by
+        *self.options.members*.
+        """
+        # set current namespace for finding members
+        self.env.temp_data["autodoc:module"] = self.modname
+        if self.objpath:
+            self.env.temp_data["autodoc:class"] = self.objpath[0]
+
+        want_all = (
+            all_members or self.options.inherited_members or self.options.members is ALL
+        )
+        # find out which members are documentable
+        members_check_module, members = self.get_object_members(want_all)
+
+        # document non-skipped members
+        memberdocumenters = []  # type: List[Tuple[Documenter, bool]]
+        for (mname, member, isattr) in self.filter_members(members, want_all):
+            classes = [
+                cls
+                for cls in self.documenters.values()
+                if cls.can_document_member(member, mname, isattr, self)
+            ]
+            plog(mname, member)
+            if not classes:
+                # don't know how to document this member
+                continue
+            # prefer the documenter with the highest priority
+            classes.sort(key=lambda cls: cls.priority)
+            # give explicitly separated module name, so that members
+            # of inner classes can be documented
+            full_mname = self.modname + "::" + ".".join(self.objpath + [mname])
+            documenter = classes[-1](self.directive, full_mname, self.indent)
+            memberdocumenters.append((documenter, isattr))
+
+        member_order = self.options.member_order or self.config.autodoc_member_order
+        memberdocumenters = self.sort_members(memberdocumenters, member_order)
+
+        for documenter, isattr in memberdocumenters:
+            documenter.generate(
+                all_members=True,
+                real_modname=self.real_modname,
+                check_module=members_check_module and not isattr,
+            )
+
+        # reset current objects
+        self.env.temp_data["autodoc:module"] = None
+        self.env.temp_data["autodoc:class"] = None
+
 
 class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
-    pass
+    def add_directive_header(self, sig: str) -> None:
+        return super().add_directive_header(sig)
+
+    def parse_name(self) -> bool:
+        return super().parse_name()
+
+    def import_object(self, raiseerror: bool = False) -> bool:
+        ret = super().import_object(raiseerror)
+
+        try:
+            if not self.options.ignore_module_all:
+                self.__all__ = getall(self.object)
+        except AttributeError as exc:
+            # __all__ raises an error.
+            logger.warning(
+                __("%s.__all__ raises an error. Ignored: %r"),
+                (self.fullname, exc),
+                type="autodoc",
+            )
+        except ValueError as exc:
+            # invalid __all__ found.
+            logger.warning(
+                __(
+                    "__all__ should be a list of strings, not %r "
+                    "(in module %s) -- ignoring __all__"
+                )
+                % (exc.args[0], self.fullname),
+                type="autodoc",
+            )
+
+        return ret
+
+    def get_object_members(self, want_all: bool):
+        if want_all:
+            members = get_module_members(self.object)
+            if not self.__all__:
+                # for implicit module members, check __module__ to avoid
+                # documenting imported objects
+                return True, members
+            else:
+                ret = []
+                for name, value in members:
+                    if hy.mangle(name) in self.__all__:
+                        ret.append(ObjectMember(name, value))
+                    else:
+                        ret.append(ObjectMember(name, value, skipped=True))
+
+                return False, ret
+        else:
+            memberlist = self.options.members or []
+            ret = []
+            for name in memberlist:
+                try:
+                    value = safe_getattr(self.object, hy.mangle(name))
+                    ret.append(ObjectMember(name, value))
+                except AttributeError:
+                    logger.warning(
+                        __(
+                            "missing attribute mentioned in :members: option: "
+                            "module %s, attribute %s"
+                        )
+                        % (safe_getattr(self.object, "__name__", "???"), name),
+                        type="autodoc",
+                    )
+            return False, ret
 
 
 class HyFunctionDocumenter(HyDocumenter, PyFunctionDocumenter):
     objtype = "function"
     member_order = 30
+    priority = 1
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):
+        return is_hy(member, membername, parent) and super().can_document_member(
+            member, membername, isattr, parent
+        )
+
+
+class HyMethodDocumenter(HyDocumenter, PyMethodDocumenter):
+    objtype = "method"
+    priority = 2
+
+    @classmethod
+    def can_document_member(
+        cls, member: Any, membername: str, isattr: bool, parent: Any
+    ) -> bool:
+        return is_hy(member, membername, parent) and super().can_document_member(
+            member, membername, isattr, parent
+        )
+
+    def format_args(self, **kwargs: Any) -> str:
+        return super().format_args(**kwargs)
+
+    def add_directive_header(self, sig: str) -> None:
+        super().add_directive_header(sig)
+
+        sourcename = self.get_sourcename()
+        obj = self.parent.__dict__.get(self.object_name, self.object)
+        if inspect.isabstractmethod(obj):
+            self.add_line('   :abstractmethod:', sourcename)
+        if inspect.iscoroutinefunction(obj):
+            self.add_line('   :async:', sourcename)
+        if inspect.isclassmethod(obj):
+            self.add_line('   :classmethod:', sourcename)
+        if inspect.isstaticmethod(obj, cls=self.parent, name=self.object_name):
+            self.add_line('   :staticmethod:', sourcename)
+        if self.analyzer and '.'.join(self.objpath) in self.analyzer.finals:
+            self.add_line('   :final:', sourcename)
+
+
+class HyPropertyDocumenter(HyDocumenter, PyPropertyDocumenter):
+    objtype = "property"
+    diretivetype = "method"
+    priority = PyAttributeDocumenter.priority + 2
+
+    @classmethod
+    def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any
+                            ) -> bool:
+        return is_hy(member, membername, parent) and inspect.isproperty(member) and isinstance(parent, HyClassDocumenter)
+
+    def add_directive_header(self, sig: str) -> None:
+        super().add_directive_header(sig)
+        sourcename = self.get_sourcename()
+        if inspect.isabstractmethod(self.object):
+            self.add_line('   :abstractmethod:', sourcename)
+        self.add_line('   :property:', sourcename)
+
+
+class HyDecoratorDocumenter(HyDocumenter, PyDecoratorDocumenter):
+    """
+    Specialized Documenter subclass for decorator functions.
+    """
+    objtype = 'decorator'
+
+    # must be lower than FunctionDocumenter
+    priority = -1
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):
+        return is_hy(member, membername, parent) and super().can_document_member(
+            member, membername, isattr, parent
+        )
+
+    def format_args(self, **kwargs: Any) -> Any:
+        args = super().format_args(**kwargs)
+        if ',' in args:
+            return args
+        else:
+            return None
+class HyClassDocumenter(HyDocumenter, PyClassDocumenter):
+    objtype = "class"
+    priority = 1
+
+    @classmethod
+    def can_document_member(
+        cls, member: Any, membername: str, isattr: bool, parent: Any
+    ) -> bool:
+        return is_hy(member, membername, parent) and super().can_document_member(
+            member, membername, isattr, parent
+        )
+
+    def import_object(self, raiseerror: bool = False) -> bool:
+        ret = super().import_object(raiseerror=raiseerror)
+
+        if ret:
+            if hasattr(self.object, "__name__"):
+                self.doc_as_attr = self.objpath[-1] != self.object.__name__
+            else:
+                self.doc_as_attr = True
+
+        return ret

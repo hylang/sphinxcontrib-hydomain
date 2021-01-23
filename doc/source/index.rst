@@ -8,13 +8,26 @@
 Hy Domain
 ^^^^^^^^^^^^^^^
 
-.. hy:autofunction:: dummy_module.a-func?
+Hy AutoDocs
+=============
 
-.. autofunction:: dummy_py_module.bar
+.. hy:automodule:: dummy_module
+   :members:
+   :undoc-members:
 
-.. hy:function:: (dummy_module.b-func ^int [a b])
+.. hy:autodecorator:: dummy_module.adecorator
 
-   Hello World!
+Py Autodoc
+==========
+
+.. automodule:: dummy_py_module
+   :members:
+   :undoc-members:
+
+.. autodecorator:: dummy_py_module.adecorator
+
+Hy Domain Directives
+=========================
 
 .. hy:module:: coordinates
 

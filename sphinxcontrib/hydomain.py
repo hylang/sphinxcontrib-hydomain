@@ -27,16 +27,11 @@ from docutils import nodes
 from docutils.nodes import Element, Node
 from sphinx import addnodes
 from sphinx.addnodes import desc_signature, pending_xref
+from sphinx.application import Sphinx
 from sphinx.directives import directives
 from sphinx.domains import Domain, ObjType
-from sphinx.domains.python import (
-    ModuleEntry,
-    ObjectEntry,
-    PyModule,
-    PyObject,
-    PythonModuleIndex,
-    pairindextypes,
-)
+from sphinx.domains.python import (ModuleEntry, ObjectEntry, PyModule,
+                                   PyObject, PythonModuleIndex, pairindextypes)
 from sphinx.environment import BuildEnvironment
 from sphinx.locale import _, __
 from sphinx.pycode.ast import parse as ast_parse
@@ -44,6 +39,7 @@ from sphinx.roles import XRefRole
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.inspect import signature_from_ast
 from sphinx.util.nodes import make_id, make_refnode
+
 import sphinxcontrib.hy_documenters as doc
 
 # ** Consts
@@ -87,6 +83,7 @@ def _parse_arglist(arglist: str, env: BuildEnvironment = None):
     sig = signature_from_str("[%s]" % arglist)
     first_default = True
     last_kind = None
+
     for param in sig.parameters.values():
         if param.kind != param.POSITIONAL_ONLY and last_kind == param.POSITIONAL_ONLY:
             # PEP-570: Separator for Positional Only Parameter: /
@@ -108,23 +105,25 @@ def _parse_arglist(arglist: str, env: BuildEnvironment = None):
             )
             first_default = False
 
-        if param.annotation is not param.empty:
-            children = _parse_annotation(param.annotation, env)
-            node += desc_hyannotation(param.annotation, "", *children)
-            node += nodes.Text(" ")
-            # node += addnodes.desc_sig_punctuation("", ":")
-
-            # node += addnodes.desc_sig_name("", "", *children)  # type: ignore
+        def annotate(param):
+            nonlocal node
+            if param.annotation is not param.empty:
+                children = _parse_annotation(param.annotation, env)
+                node += desc_hyannotation(param.annotation, "", *children)
+                node += nodes.Text(" ")
 
         if param.kind == param.VAR_POSITIONAL:
             node += addnodes.desc_sig_operator(" ", "&rest")
             node += nodes.Text(" ")
+            annotate(param)
             node += addnodes.desc_sig_name("", param.name)
         elif param.kind == param.VAR_KEYWORD:
             node += addnodes.desc_sig_operator("", "&kwargs")
             node += nodes.Text(" ")
+            annotate(param)
             node += addnodes.desc_sig_name("", param.name)
         else:
+            annotate(param)
             if param.default is not param.empty:
                 node += nodes.Text("[")
             node += addnodes.desc_sig_name("", param.name)
@@ -377,7 +376,7 @@ class HyObject(PyObject):
                 signode += _parse_arglist(arglist, self.env)
             except NotImplementedError as exc:
                 logging.warning(
-                    "could not parse arglist (%r): %s", arglist, exc, location=signode
+                    "could not parse arglist (%r): %s",  exc
                 )
                 # _pseudo_parse_arglist(signode, arglist)
         else:
@@ -828,7 +827,6 @@ class HyDomain(Domain):
                 ),
                 name,
                 other.docname,
-                location=location,
             )
         self.objects[name] = ObjectEntry(self.env.docname, node_id, objtype)
 
@@ -1075,6 +1073,7 @@ def d_html_hyparameter(self, node):
 
 
 def v_html_hyannotation(self, node):
+    self.param_separator = self.param_separator.replace(",", "")
     if self.body[-2] != ("["):
         self.body.append(self.param_separator)
     if node.hasattr("lambda_keyword"):
@@ -1095,7 +1094,7 @@ def d_html_hyannotation(self, node):
 
 
 # ** Register with Sphinx
-def setup(app):
+def setup(app: Sphinx):
     app.add_domain(HyDomain)
     app.add_node(desc_hyparameterlist, html=(v_hyparameterlist, d_hyparameterlist))
     app.add_node(desc_hyparameter, html=(v_html_hyparameter, d_html_hyparameter))
@@ -1103,3 +1102,18 @@ def setup(app):
 
     app.registry.add_documenter("hy:function", doc.HyFunctionDocumenter)
     app.add_directive_to_domain("hy", "autofunction", doc.HyAutodocDirective)
+
+    app.registry.add_documenter("hy:method", doc.HyMethodDocumenter)
+    app.add_directive_to_domain("hy", "automethod", doc.HyAutodocDirective)
+
+    app.registry.add_documenter("hy:property", doc.HyPropertyDocumenter)
+    app.add_directive_to_domain("hy", "autoproperty", doc.HyAutodocDirective)
+
+    app.registry.add_documenter("hy:decorator", doc.HyDecoratorDocumenter)
+    app.add_directive_to_domain("hy", "autodecorator", doc.HyAutodocDirective)
+
+    app.registry.add_documenter("hy:module", doc.HyModuleDocumenter)
+    app.add_directive_to_domain("hy", "automodule", doc.HyAutodocDirective)
+
+    app.registry.add_documenter("hy:class", doc.HyClassDocumenter)
+    app.add_directive_to_domain("hy", "autoclass", doc.HyAutodocDirective)
