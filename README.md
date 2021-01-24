@@ -12,6 +12,8 @@
   - [ ] type
   - [ ] value
 - [x] FunctionDocumenter
+  - [ ] object default value (ie. _sentinel)
+  - [ ] mangling parameter names
   - [x] async prop
 - [x] DecoratorDocumenter
 - [ ] MethodDocumenter

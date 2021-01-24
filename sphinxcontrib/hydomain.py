@@ -70,12 +70,20 @@ def hy2py(source: str) -> str:
 
 
 def signature_from_str(signature: str) -> inspect.Signature:
+    # NOTE Likely where the crash on -sentinel bug is happening
     code = "(defn func" + signature + ")"
     hst = hy.lex.hy_parse(code)
     module = hy.compiler.hy_compile(hst, "__main__")
     function = cast(ast.FunctionDef, module.body[0])
 
     return signature_from_ast(function)
+
+
+def plog(*args):
+    pp("----------------------")
+    for arg in args:
+        pp(arg)
+    pp("----------------------")
 
 
 def _parse_arglist(arglist: str, env: BuildEnvironment = None):
@@ -116,17 +124,17 @@ def _parse_arglist(arglist: str, env: BuildEnvironment = None):
             node += addnodes.desc_sig_operator(" ", "&rest")
             node += nodes.Text(" ")
             annotate(param)
-            node += addnodes.desc_sig_name("", param.name)
+            node += addnodes.desc_sig_name("", hy.unmangle(param.name))
         elif param.kind == param.VAR_KEYWORD:
             node += addnodes.desc_sig_operator("", "&kwargs")
             node += nodes.Text(" ")
             annotate(param)
-            node += addnodes.desc_sig_name("", param.name)
+            node += addnodes.desc_sig_name("", hy.unmangle(param.name))
         else:
             annotate(param)
             if param.default is not param.empty:
                 node += nodes.Text("[")
-            node += addnodes.desc_sig_name("", param.name)
+            node += addnodes.desc_sig_name("", hy.unmangle(param.name))
 
         if param.default is not param.empty:
             if param.annotation is not param.empty:

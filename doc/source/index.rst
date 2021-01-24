@@ -76,7 +76,7 @@ Hy Domain Directives
 
    * Link to :hy:class:`PointNoModule`
 
-.. hy:function:: (foo [x y])
+.. hy:function:: (foo [x y!])
 
    :param x: param x
    :type  x: int

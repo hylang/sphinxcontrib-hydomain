@@ -28,6 +28,10 @@ def adecorator(fn):
 async def async_func(a):
     pass
 
+_sentinel = object()
+def obj_param_test(something = _sentinel):
+    pass
+
 class Point:
     "A two dimensional coordinate on the x y plane"
 

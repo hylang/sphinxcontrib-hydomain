@@ -374,7 +374,6 @@ def signature(obj, bound_method=False):
 
     return f"^{retann} [{arg_string}]" if retann else f"[{arg_string}]"
 
-
 def get_module_members(module: Any):
     """Get members of target module."""
     from sphinx.ext.autodoc import INSTANCEATTR
