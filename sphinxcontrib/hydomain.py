@@ -466,11 +466,22 @@ class HyObject(PyObject):
 
 
 class HyFunction(HyObject):
+    option_spec = HyObject.option_spec.copy()
+    option_spec.update({
+        "async": directives.flag
+    })
+
     def get_index_text(self, modname: str, name: Tuple[str, str]) -> str:
         return None
 
     def needs_arglist(self):
         return True
+
+    def get_signature_prefix(self, sig: str):
+        if "async" in self.options:
+            return "async "
+        else:
+            return ""
 
     def add_target_and_index(
         self, name: Any, sig: str, signode: desc_signature
@@ -1117,3 +1128,6 @@ def setup(app: Sphinx):
 
     app.registry.add_documenter("hy:class", doc.HyClassDocumenter)
     app.add_directive_to_domain("hy", "autoclass", doc.HyAutodocDirective)
+
+    app.registry.add_documenter("hy:exception", doc.HyExceptionDocumenter)
+    app.add_directive_to_domain("hy", "autoexception", doc.HyAutodocDirective)

@@ -703,6 +703,13 @@ class HyFunctionDocumenter(HyDocumenter, PyFunctionDocumenter):
             member, membername, isattr, parent
         )
 
+    def add_directive_header(self, sig: str) -> None:
+        sourcename = self.get_sourcename()
+        super().add_directive_header(sig)
+
+        if inspect.iscoroutinefunction(self.object):
+            self.add_line('   :async:', sourcename)
+
 
 class HyMethodDocumenter(HyDocumenter, PyMethodDocumenter):
     objtype = "method"
@@ -725,15 +732,15 @@ class HyMethodDocumenter(HyDocumenter, PyMethodDocumenter):
         sourcename = self.get_sourcename()
         obj = self.parent.__dict__.get(self.object_name, self.object)
         if inspect.isabstractmethod(obj):
-            self.add_line('   :abstractmethod:', sourcename)
+            self.add_line("   :abstractmethod:", sourcename)
         if inspect.iscoroutinefunction(obj):
-            self.add_line('   :async:', sourcename)
+            self.add_line("   :async:", sourcename)
         if inspect.isclassmethod(obj):
-            self.add_line('   :classmethod:', sourcename)
+            self.add_line("   :classmethod:", sourcename)
         if inspect.isstaticmethod(obj, cls=self.parent, name=self.object_name):
-            self.add_line('   :staticmethod:', sourcename)
-        if self.analyzer and '.'.join(self.objpath) in self.analyzer.finals:
-            self.add_line('   :final:', sourcename)
+            self.add_line("   :staticmethod:", sourcename)
+        if self.analyzer and ".".join(self.objpath) in self.analyzer.finals:
+            self.add_line("   :final:", sourcename)
 
 
 class HyPropertyDocumenter(HyDocumenter, PyPropertyDocumenter):
@@ -742,23 +749,29 @@ class HyPropertyDocumenter(HyDocumenter, PyPropertyDocumenter):
     priority = PyAttributeDocumenter.priority + 2
 
     @classmethod
-    def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any
-                            ) -> bool:
-        return is_hy(member, membername, parent) and inspect.isproperty(member) and isinstance(parent, HyClassDocumenter)
+    def can_document_member(
+        cls, member: Any, membername: str, isattr: bool, parent: Any
+    ) -> bool:
+        return (
+            is_hy(member, membername, parent)
+            and inspect.isproperty(member)
+            and isinstance(parent, HyClassDocumenter)
+        )
 
     def add_directive_header(self, sig: str) -> None:
         super().add_directive_header(sig)
         sourcename = self.get_sourcename()
         if inspect.isabstractmethod(self.object):
-            self.add_line('   :abstractmethod:', sourcename)
-        self.add_line('   :property:', sourcename)
+            self.add_line("   :abstractmethod:", sourcename)
+        self.add_line("   :property:", sourcename)
 
 
 class HyDecoratorDocumenter(HyDocumenter, PyDecoratorDocumenter):
     """
     Specialized Documenter subclass for decorator functions.
     """
-    objtype = 'decorator'
+
+    objtype = "decorator"
 
     # must be lower than FunctionDocumenter
     priority = -1
@@ -771,10 +784,12 @@ class HyDecoratorDocumenter(HyDocumenter, PyDecoratorDocumenter):
 
     def format_args(self, **kwargs: Any) -> Any:
         args = super().format_args(**kwargs)
-        if ',' in args:
+        if "," in args:
             return args
         else:
             return None
+
+
 class HyClassDocumenter(HyDocumenter, PyClassDocumenter):
     objtype = "class"
     priority = 1
@@ -797,3 +812,15 @@ class HyClassDocumenter(HyDocumenter, PyClassDocumenter):
                 self.doc_as_attr = True
 
         return ret
+
+
+class HyExceptionDocumenter(HyClassDocumenter):
+    objtype = "exception"
+    member_order = 10
+    priority = 11
+
+    @classmethod
+    def can_document_member(
+        cls, member: Any, membername: str, isattr: bool, parent: Any
+    ) -> bool:
+        return is_hy(member, membername, parent) and isinstance(member, type) and issubclass(member, BaseException)

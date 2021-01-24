@@ -1,4 +1,4 @@
-# TODO
+# AutoDoc
 - [ ] ModuleDocumenter
   - [ ] macros
   - [x] docstrings
@@ -6,16 +6,17 @@
   - [ ] remove self parameter
   - [ ] final
 - [ ] ExceptionDocumenter
+  - [x] exception tag
   - [ ] final
 - [ ] DataDocumenter
   - [ ] type
   - [ ] value
-- [ ] FunctionDocumenter
-  - [ ] async prop
+- [x] FunctionDocumenter
+  - [x] async prop
 - [x] DecoratorDocumenter
 - [ ] MethodDocumenter
-  - [ ] async
-  - [ ] abstractmethod
+  - [x] async
+  - [x] abstractmethod
   - [x] classmethod
   - [ ] final
   - [x] property

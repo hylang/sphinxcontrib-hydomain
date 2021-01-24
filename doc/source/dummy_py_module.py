@@ -4,6 +4,7 @@ some additional text"""
 from typing import Optional, final
 import typing as t
 from functools import wraps
+import abc
 
 GLOBAL_VAR: str = "Hello World"
 """something important about GLOBAL_VAR"""
@@ -58,6 +59,17 @@ class Point:
     def distance_to_origin(self):
         "Distance to the coordinate (0, 0)"
         return 1
+
+    async def async_method(self):
+        return 1
+
+    @abc.abstractmethod
+    def method_to_implement(self, input):
+        pass
+
+    @final
+    def final_method(self):
+        pass
 
 @final
 class MyError(Exception):

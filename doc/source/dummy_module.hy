@@ -3,6 +3,7 @@
 some additional text"
 (import [typing [Optional Tuple Dict final]]
         [functools [wraps]]
+        abc
         sys)
 
 ;; TODO Module documenter doesn't pull macros
@@ -73,7 +74,16 @@ some additional text"
   #@(property
       (defn distance-to-origin [self]
         "Distance to the coordinate (0, 0)"
-        1)))
+        1))
+
+  (defn/a async-method [sefl])
+
+  #@(abc.abstractmethod
+      (defn method_to_implement [self input]))
+
+  #@(final
+      (defn final-method [self]))
+  )
 
 ;; TODO
 
