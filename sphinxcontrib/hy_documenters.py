@@ -349,12 +349,12 @@ def signature(obj, bound_method=False):
 
     def render_arg(arg, default=None):
         ann = argspec.annotations.get(arg)
-        ann = stringify(ann) if ann is not None else ""
+        ann = f"^{stringify(ann)}" if ann is not None else ""
         arg = hy.unmangle(str(arg))
         return (
-            (f"^{ann} {arg}" if ann else arg)
+            (f"{ann} {arg}" if ann else arg)
             if default is None
-            else f"^{ann} [{arg} {default}]"
+            else f"{ann} [{arg} {default}]"
         )
 
     def format_section(args, opener):
@@ -373,6 +373,7 @@ def signature(obj, bound_method=False):
     retann = stringify(retann) + " " if retann is not None else ""
 
     return f"^{retann} [{arg_string}]" if retann else f"[{arg_string}]"
+
 
 def get_module_members(module: Any):
     """Get members of target module."""

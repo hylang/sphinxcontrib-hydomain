@@ -15,7 +15,7 @@ some additional text"
   "Tag macro for await expression"
   `(await (~@body)))
 
-(defall a-func? Point adecorator MyError GLOBAL-VAR Vector async-func obj-param-test)
+(defall a-func? Point adecorator MyError GLOBAL-VAR Vector async-func obj-param-test optional-bug)
 
 ;; TODO
 (setv GLOBAL-VAR "hello world")
@@ -29,6 +29,8 @@ some additional text"
 ;; WARNING crashes compiler
 ;; (setv -sentinel (object))
 ;; (defn obj-param-test [&optional [something -sentinel]])
+
+(defn optional-bug [&optional [g "G"]])
 
 (defn a-func? ^int [^int a
                  &optional ^float [c 42.0]
