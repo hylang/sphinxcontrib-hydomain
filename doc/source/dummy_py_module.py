@@ -1,6 +1,15 @@
-from typing import Optional
+"""Dummy Python Module
+
+some additional text"""
+from typing import Optional, final
 import typing as t
 from functools import wraps
+
+GLOBAL_VAR: str = "Hello World"
+"""something important about GLOBAL_VAR"""
+
+Vector = list[float]
+"""I'm a type jim"""
 
 
 def bar(a: Optional[int], b: t.Optional[int]) -> int:
@@ -15,12 +24,21 @@ def adecorator(fn):
 
     return wrapped
 
+async def async_func(a):
+    pass
+
 class Point:
     "A two dimensional coordinate on the x y plane"
 
+    Vector = list[float]
+    """Attribute new type"""
+
     def __init__(self, x, y):
+        #: location on the x axis
         self.x = x
+        #: location on the y axis
         self.y = y
+
 
     def distance(self, other: "Point") -> float:
         """Calculates distance between self and another point"""
@@ -41,6 +59,7 @@ class Point:
         "Distance to the coordinate (0, 0)"
         return 1
 
+@final
 class MyError(Exception):
     def __init__(self, a, b, c):
         pass

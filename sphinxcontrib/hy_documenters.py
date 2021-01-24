@@ -598,7 +598,6 @@ class HyDocumenter(PyDocumenter):
                 for cls in self.documenters.values()
                 if cls.can_document_member(member, mname, isattr, self)
             ]
-            plog(mname, member)
             if not classes:
                 # don't know how to document this member
                 continue

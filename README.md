@@ -1,0 +1,28 @@
+# TODO
+- [ ] ModuleDocumenter
+  - [ ] macros
+  - [x] docstrings
+- [ ] ClassDocumenter
+  - [ ] remove self parameter
+  - [ ] final
+- [ ] ExceptionDocumenter
+  - [ ] final
+- [ ] DataDocumenter
+  - [ ] type
+  - [ ] value
+- [ ] FunctionDocumenter
+  - [ ] async prop
+- [x] DecoratorDocumenter
+- [ ] MethodDocumenter
+  - [ ] async
+  - [ ] abstractmethod
+  - [x] classmethod
+  - [ ] final
+  - [x] property
+  - [x] staticmethod
+- [ ] AttributeDocumenter
+  - [ ] type
+  - [ ] value
+- [x] PropertyDocumenter
+- [ ] NewTypeAttributeDocumenter
+- [ ] NewTypeDataDocumenter
