@@ -681,6 +681,7 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
     def get_object_members(self, want_all: bool):
         if want_all:
             members = get_module_members(self.object)
+            members = [member for member in members if not member[0].startswith("-hy-anon-var")]
             if not self.__all__:
                 # for implicit module members, check __module__ to avoid
                 # documenting imported objects

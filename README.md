@@ -1,6 +1,10 @@
 # AutoDoc
 - [ ] ModuleDocumenter
-  - [ ] macros
+  - [ ] anon var private members
+  - [x] macros
+  - [ ] macros as own header option
+  - [ ] tags
+  - [ ] tags as own header option
   - [x] docstrings
 - [ ] ClassDocumenter
   - [ ] remove self parameter
