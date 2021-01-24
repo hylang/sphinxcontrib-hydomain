@@ -12,10 +12,11 @@ Hy AutoDocs
 =============
 
 .. hy:automodule:: dummy_module
-   :members:
-   :undoc-members:
+  :members:
+  :undoc-members:
 
 .. hy:autodecorator:: dummy_module.adecorator
+
 
 Py Autodoc
 ==========

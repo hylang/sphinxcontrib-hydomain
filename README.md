@@ -11,9 +11,12 @@
 - [ ] DataDocumenter
   - [ ] type
   - [ ] value
+- [ ] automacro
+  - [ ] remove &name param from signature
+- [ ] autotag
 - [x] FunctionDocumenter
   - [ ] object default value (ie. _sentinel)
-  - [ ] mangling parameter names
+  - [x] mangling parameter names
   - [x] async prop
 - [x] DecoratorDocumenter
 - [ ] MethodDocumenter

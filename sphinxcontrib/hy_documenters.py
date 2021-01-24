@@ -160,6 +160,7 @@ def import_object(
     objtype: str = "",
     attrgetter: Callable[[Any, str], Any] = safe_getattr,
     warningiserror: bool = False,
+    macro: bool=False
 ) -> Any:
     if objpath:
         logger.debug("[autodoc] from %s import %s", modname, ".".join(objpath))
@@ -187,16 +188,24 @@ def import_object(
         obj = module
         parent = None
         object_name = None
-        for attrname in objpath:
-            parent = obj
-            logger.debug("[autodoc] getattr(_, %r)", attrname)
-            # mangled_name = hy.mangle(obj, attrname)
+        if macro:
+            attrname = objpath[0]
             mangled_name = hy.mangle(attrname)
-            obj = attrgetter(obj, mangled_name)
+            obj = getattr(obj, "__dict__", {}).get("__macros__", {})[mangled_name]
             logger.debug("[autodoc] => %r", obj)
             object_name = attrname
-        return [module, parent, object_name, obj]
-    except (AttributeError, ImportError) as exc:
+            return [module, parent, object_name, obj]
+        else:
+            for attrname in objpath:
+                parent = obj
+                logger.debug("[autodoc] getattr(_, %r)", attrname)
+                # mangled_name = hy.mangle(obj, attrname)
+                mangled_name = hy.mangle(attrname)
+                obj = attrgetter(obj, mangled_name)
+                logger.debug("[autodoc] => %r", obj)
+                object_name = attrname
+            return [module, parent, object_name, obj]
+    except (AttributeError, ImportError, KeyError) as exc:
         if isinstance(exc, AttributeError) and exc_on_importing:
             # restore ImportError
             exc = exc_on_importing
@@ -380,9 +389,19 @@ def get_module_members(module: Any):
     from sphinx.ext.autodoc import INSTANCEATTR
 
     members = {}
+    macros = safe_getattr(module, "__macros__", {})
+
     for name in dir(module):
         try:
             value = safe_getattr(module, name, None)
+            name = hy.unmangle(name)
+            members[name] = (name, value)
+        except AttributeError:
+            continue
+
+    for name, value in macros.items():
+        try:
+            setattr(value, "__macro__", True)
             name = hy.unmangle(name)
             members[name] = (name, value)
         except AttributeError:
@@ -592,7 +611,9 @@ class HyDocumenter(PyDocumenter):
 
         # document non-skipped members
         memberdocumenters = []  # type: List[Tuple[Documenter, bool]]
-        for (mname, member, isattr) in self.filter_members(members, want_all):
+        wanted_members = self.filter_members(members, want_all)
+        module_macros = [member for member in members if getattr(member, "__macro__", False)]
+        for (mname, member, isattr) in wanted_members:
             classes = [
                 cls
                 for cls in self.documenters.values()
@@ -642,7 +663,7 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
             logger.warning(
                 __("%s.__all__ raises an error. Ignored: %r"),
                 (self.fullname, exc),
-                type="autodoc",
+                # type="autodoc",
             )
         except ValueError as exc:
             # invalid __all__ found.
@@ -652,7 +673,7 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                     "(in module %s) -- ignoring __all__"
                 )
                 % (exc.args[0], self.fullname),
-                type="autodoc",
+                # type="autodoc",
             )
 
         return ret
@@ -667,7 +688,7 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
             else:
                 ret = []
                 for name, value in members:
-                    if hy.mangle(name) in self.__all__:
+                    if hy.mangle(name) in self.__all__ or getattr(value, "__macro__", False):
                         ret.append(ObjectMember(name, value))
                     else:
                         ret.append(ObjectMember(name, value, skipped=True))
@@ -687,7 +708,7 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                             "module %s, attribute %s"
                         )
                         % (safe_getattr(self.object, "__name__", "???"), name),
-                        type="autodoc",
+                        # type="autodoc",
                     )
             return False, ret
 
@@ -709,6 +730,38 @@ class HyFunctionDocumenter(HyDocumenter, PyFunctionDocumenter):
 
         if inspect.iscoroutinefunction(self.object):
             self.add_line('   :async:', sourcename)
+
+
+class HyMacroDocumenter(HyFunctionDocumenter):
+    objtype = "function"
+    member_order = 30
+    priority = 3 # Above regular function documenter
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):
+        return super().can_document_member(member, membername, isattr, parent) and getattr(member, "__macro__", False)
+
+    def import_object(self, raiseerror: bool = False) -> bool:
+        """Import the object given by *self.modname* and *self.objpath* and set
+        it as *self.object*.
+        Returns True if successful, False if an error occurred.
+        """
+        with mock(self.config.autodoc_mock_imports):
+            try:
+                ret = import_object(self.modname, self.objpath, self.objtype,
+                                    attrgetter=self.get_attr,
+                                    warningiserror=self.config.autodoc_warningiserror,
+                                    macro=True)
+                self.module, self.parent, self.object_name, self.object = ret
+                return True
+            except ImportError as exc:
+                if raiseerror:
+                    raise
+                else:
+                    logger.warning(exc.args[0])
+                    self.env.note_reread()
+                    return False
+
 
 
 class HyMethodDocumenter(HyDocumenter, PyMethodDocumenter):

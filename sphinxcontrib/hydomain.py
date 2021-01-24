@@ -1122,6 +1122,9 @@ def setup(app: Sphinx):
     app.registry.add_documenter("hy:function", doc.HyFunctionDocumenter)
     app.add_directive_to_domain("hy", "autofunction", doc.HyAutodocDirective)
 
+    app.registry.add_documenter("hy:macro", doc.HyMacroDocumenter)
+    app.add_directive_to_domain("hy", "automacro", doc.HyAutodocDirective)
+
     app.registry.add_documenter("hy:method", doc.HyMethodDocumenter)
     app.add_directive_to_domain("hy", "automethod", doc.HyAutodocDirective)
 
