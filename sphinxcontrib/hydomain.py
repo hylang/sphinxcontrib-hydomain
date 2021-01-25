@@ -513,6 +513,25 @@ class HyMacro(HyFunction):
 
 
 class HyTag(HyFunction):
+    def add_target_and_index(self, name_cls: Tuple[str, str], sig: str, signode):
+        modname = self.options.get("module", self.env.ref_context.get("hy:module"))
+        fullname = (modname + "." if modname else "") + "#" + name_cls[0]
+        # node_id = make_id(self.env, self.state.document, "", fullname)
+        node_id = fullname
+        signode["ids"].append(node_id)
+
+        self.state.document.note_explicit_target(signode)
+
+        domain = cast(HyDomain, self.env.get_domain("hy"))
+        domain.note_object(fullname, self.objtype, node_id, location=signode)
+
+        if "noindexentry" not in self.options:
+            indextext = self.get_index_text(modname, name_cls)
+            if indextext:
+                self.indexnode["entries"].append(
+                    ("single", indextext, node_id, "", None)
+                )
+
     def handle_signature(self, sig: str, signode) -> Tuple[str, str]:
         isvar = False
         msexp = hy_sexp_sig_re.match(sig)
