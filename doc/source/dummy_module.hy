@@ -11,6 +11,10 @@ some additional text"
   "Defines `--all--` using unmangled hy names"
   `(setv __all__ ~(lfor sym symbols (mangle (name sym)))))
 
+(defmacro ! [&rest body]
+  "Macro version of shortened await"
+  `(await (~@body)))
+
 (deftag ! [&rest body]
   "Tag macro for await expression"
   `(await (~@body)))

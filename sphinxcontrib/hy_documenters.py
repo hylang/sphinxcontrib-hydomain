@@ -416,13 +416,7 @@ def get_module_members(module: Any):
         except AttributeError:
             continue
 
-    for name, value in tags.items():
-        try:
-            setattr(value, "__tag__", True)
-            name = hy.unmangle(name)
-            members[name] = (name, value)
-        except AttributeError:
-            continue
+    ret = sorted(list(members.values()))
 
     # annotation only member (ex. attr: int)
     try:
@@ -432,7 +426,16 @@ def get_module_members(module: Any):
     except AttributeError:
         pass
 
-    return sorted(list(members.values()))
+    for name, value in tags.items():
+        try:
+            setattr(value, "__tag__", True)
+            name = hy.unmangle(name)
+            ret.append(( name, value ))
+        except AttributeError:
+            continue
+
+
+    return ret
 
 
 def is_hy(member, membername, parent):

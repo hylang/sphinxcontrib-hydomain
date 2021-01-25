@@ -523,6 +523,7 @@ class HyTag(HyFunction):
         self.state.document.note_explicit_target(signode)
 
         domain = cast(HyDomain, self.env.get_domain("hy"))
+        plog(fullname, self.objtype, node_id, signode)
         domain.note_object(fullname, self.objtype, node_id, location=signode)
 
         if "noindexentry" not in self.options:
