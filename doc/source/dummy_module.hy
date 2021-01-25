@@ -96,7 +96,7 @@ some additional text"
         "Distance to the coordinate (0, 0)"
         1))
 
-  (defn/a async-method [sefl])
+  (defn/a async-method [self])
 
   #@(abc.abstractmethod
       (defn method_to_implement [self input]))
