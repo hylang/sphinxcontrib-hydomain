@@ -9,7 +9,7 @@
   - [x] tags as own header option *
   - [x] docstrings
 - [ ] ClassDocumenter
-  - [ ] remove self parameter *
+  - [x] remove self parameter *
   - [ ] final (don't know if this is possible without the analyzer)
 - [ ] ExceptionDocumenter
   - [x] exception tag
@@ -17,8 +17,8 @@
 - [ ] DataDocumenter
   - [ ] type
   - [ ] value
-- [ ] automacro
-  - [ ] remove &name param from signature *
+- [x] automacro
+  - [x] remove &name param from signature *
 - [x] autotag *
 - [x] FunctionDocumenter
   - [ ] object default value (ie. _sentinel) *

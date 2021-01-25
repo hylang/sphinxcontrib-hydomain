@@ -161,7 +161,7 @@ def import_object(
     attrgetter: Callable[[Any, str], Any] = safe_getattr,
     warningiserror: bool = False,
     macro: bool = False,
-    tag: bool = False
+    tag: bool = False,
 ) -> Any:
     if objpath:
         logger.debug("[autodoc] from %s import %s", modname, ".".join(objpath))
@@ -333,14 +333,14 @@ def _stringify_py37(annotation: Any) -> str:
     return qualname
 
 
-def signature(obj, bound_method=False):
+def signature(obj, bound_method=False, macro=False):
     argspec = getfullargspec(obj)
     args = [
         (arg,)
         for arg in argspec.args[: len(argspec.args) - (len(argspec.defaults or []))]
     ]
-    if bound_method:
-        if len(args) > 0:
+    if bound_method or macro:
+        if len(args) > 0 and args[0][0] in map(hy.mangle, ("self", "&name")):
             args.pop(0)
     defaults = islice(argspec.args, len(args or []), None)
     defaults = list(zip(defaults, argspec.defaults or []))
@@ -426,14 +426,14 @@ def get_module_members(module: Any):
     except AttributeError:
         pass
 
+    # Tags come after to allow for tags and macros of same name
     for name, value in tags.items():
         try:
             setattr(value, "__tag__", True)
             name = hy.unmangle(name)
-            ret.append(( name, value ))
+            ret.append((name, value))
         except AttributeError:
             continue
-
 
     return ret
 
@@ -571,7 +571,11 @@ class HyDocumenter(PyDocumenter):
         args = ""
         retann = ""
         try:
-            args = signature(self.object)
+            args = signature(
+                self.object,
+                bound_method=isinstance(self, (HyMethodDocumenter, HyClassDocumenter)),
+                macro=isinstance(self, HyMacroDocumenter),
+            )
         except Exception as exc:
             logging.warning(
                 ("error while formatting arguments for %s: %s"),
@@ -724,7 +728,11 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                         getattr(value, "__tag__", False) and self.options.tags
                     )
 
-                    if hy.mangle(name) in self.__all__ or is_wanted_macro or is_wanted_tag:
+                    if (
+                        hy.mangle(name) in self.__all__
+                        or is_wanted_macro
+                        or is_wanted_tag
+                    ):
                         ret.append(ObjectMember(name, value))
                     else:
                         ret.append(ObjectMember(name, value, skipped=True))
@@ -829,7 +837,7 @@ class HyTagDocumenter(HyFunctionDocumenter):
                     self.objtype,
                     attrgetter=self.get_attr,
                     warningiserror=self.config.autodoc_warningiserror,
-                    tag=True
+                    tag=True,
                 )
                 self.module, self.parent, self.object_name, self.object = ret
                 return True
