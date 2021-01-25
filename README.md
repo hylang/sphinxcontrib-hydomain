@@ -1,14 +1,16 @@
 # AutoDoc
+- [ ] Reserved names populating other modules randomly *
+- [ ] ^ not showing up when used as non annotation value *
 - [ ] ModuleDocumenter
-  - [ ] anon var private members
+  - [x] anon var private members
   - [x] macros
-  - [ ] macros as own header option
-  - [ ] tags
-  - [ ] tags as own header option
+  - [x] macros as own header option *
+  - [x] tags *
+  - [x] tags as own header option *
   - [x] docstrings
 - [ ] ClassDocumenter
-  - [ ] remove self parameter
-  - [ ] final
+  - [ ] remove self parameter *
+  - [ ] final (don't know if this is possible without the analyzer)
 - [ ] ExceptionDocumenter
   - [x] exception tag
   - [ ] final
@@ -16,10 +18,10 @@
   - [ ] type
   - [ ] value
 - [ ] automacro
-  - [ ] remove &name param from signature
-- [ ] autotag
+  - [ ] remove &name param from signature *
+- [x] autotag *
 - [x] FunctionDocumenter
-  - [ ] object default value (ie. _sentinel)
+  - [ ] object default value (ie. _sentinel) *
   - [x] mangling parameter names
   - [x] async prop
 - [x] DecoratorDocumenter

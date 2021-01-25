@@ -25,6 +25,8 @@ def adecorator(fn):
 
     return wrapped
 
+var_callable = bar
+
 async def async_func(a):
     pass
 

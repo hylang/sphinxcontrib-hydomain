@@ -8,12 +8,21 @@ some additional text"
 
 ;; TODO Module documenter doesn't pull macros
 (defmacro defall [&rest symbols]
-  "Defines --all-- using unmangled hy names"
+  "Defines `--all--` using unmangled hy names"
   `(setv __all__ ~(lfor sym symbols (mangle (name sym)))))
 
 (deftag ! [&rest body]
   "Tag macro for await expression"
   `(await (~@body)))
+
+(defmacro/g! gensymmacro [&rest body]
+  "hello world!"
+  None)
+
+(defmacro triple-1 [n]
+  "hello world"
+  `(+ ~n ~n ~n))
+
 
 (defall a-func? Point adecorator MyError GLOBAL-VAR Vector async-func obj-param-test optional-bug)
 

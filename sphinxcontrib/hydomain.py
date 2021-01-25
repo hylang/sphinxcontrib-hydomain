@@ -508,6 +508,107 @@ class HyFunction(HyObject):
                 self.indexnode["entries"].append(("pair", text, node_id, "", None))
 
 
+class HyMacro(HyFunction):
+    pass
+
+
+class HyTag(HyFunction):
+    def handle_signature(self, sig: str, signode) -> Tuple[str, str]:
+        isvar = False
+        msexp = hy_sexp_sig_re.match(sig)
+        mvar = hy_var_re.match(sig)
+        if msexp is not None:
+            prefix, name, retann, arglist = msexp.groups()
+        elif mvar is not None:
+            isvar = True
+            prefix, name = mvar.groups()
+            retann, arglist = None, None
+        else:
+            raise ValueError
+
+        # determine module and class name (if applicable), as well as full name
+        modname = self.options.get("module", self.env.ref_context.get("hy:module"))
+        classname = self.env.ref_context.get("hy:class")
+        should_wrap = (
+            not isvar or self.objtype in {"function", "method"}
+        ) and "property" not in self.options
+
+        if classname:
+            add_module = False
+            if prefix and (prefix == classname or prefix.startswith(classname + ".")):
+                fullname = prefix + name
+                # class name is given again in the signature
+                prefix = prefix[len(classname) :].lstrip(".")
+            elif prefix:
+                # class name is given in the signature, but different
+                # (shouldn't happen)
+                fullname = classname + "." + prefix + name
+            else:
+                # class name is not given in the signature
+                fullname = classname + "." + name
+        else:
+            add_module = True
+            if prefix:
+                classname = prefix.rstrip(".")
+                fullname = prefix + name
+            else:
+                classname = ""
+                fullname = name
+
+        signode["module"] = modname
+        signode["class"] = classname
+        signode["fullname"] = fullname
+
+        sig_prefix = self.get_signature_prefix(sig)
+        if sig_prefix:
+            signode += addnodes.desc_annotation(sig_prefix, sig_prefix)
+
+        signode += addnodes.desc_addname("#", "#")
+
+        if add_module and self.env.config.add_module_names:
+            if modname and modname != "exceptions":
+                # exceptions are a special case, since they are documented in the
+                # 'exceptions' module.
+                nodetext = modname + "."
+                signode += addnodes.desc_addname(nodetext, nodetext)
+        signode += addnodes.desc_name(name, name)
+
+        if should_wrap:
+            signode += addnodes.desc_addname("(", "(")
+
+        if prefix:
+            signode += addnodes.desc_addname(prefix, prefix)
+
+
+
+        if retann:
+            pyretann = hy2py(retann)
+            children = _parse_annotation(pyretann, self.env)
+            signode += nodes.Text(" ")
+            signode += desc_hyannotation(pyretann, "", *children)
+
+        if arglist:
+            try:
+                signode += _parse_arglist(arglist, self.env)
+            except NotImplementedError as exc:
+                logging.warning(
+                    "could not parse arglist (%r): %s",  exc
+                )
+                # _pseudo_parse_arglist(signode, arglist)
+        else:
+            if self.needs_arglist():
+                # for callables, add an empty parameter list
+                signode += desc_hyparameterlist()
+
+        anno = self.options.get("annotation")
+        if anno:
+            signode += addnodes.desc_annotation(" " + anno, " " + anno)
+
+        if should_wrap:
+            signode += addnodes.desc_addname(")", ")")
+        return fullname, prefix
+
+
 class HyVariable(HyObject):
     option_spec = HyObject.option_spec.copy()
 
@@ -790,6 +891,8 @@ class HyDomain(Domain):
 
     object_types = {
         "function": ObjType(_("function"), "func", "obj"),
+        "macro": ObjType(_("macro"), "func", "obj"),
+        "tag": ObjType(_("tag"), "func", "obj"),
         "data": ObjType(_("data"), "data", "obj"),
         "class": ObjType(_("class"), "class", "exc", "obj"),
         "exception": ObjType(_("exception"), "exc", "class", "obj"),
@@ -802,6 +905,8 @@ class HyDomain(Domain):
 
     directives = {
         "function": HyFunction,
+        "macro": HyMacro,
+        "tag": HyTag,
         "data": HyVariable,
         "module": HyModule,
         "class": HyClass,
@@ -817,6 +922,8 @@ class HyDomain(Domain):
 
     roles = {
         "func": HyXRefRole(),
+        "macro": HyXRefRole(),
+        "tag": HyXRefRole(),
         "data": HyXRefRole(),
         "class": HyXRefRole(),
         "meth": HyXRefRole(),
@@ -1124,6 +1231,9 @@ def setup(app: Sphinx):
 
     app.registry.add_documenter("hy:macro", doc.HyMacroDocumenter)
     app.add_directive_to_domain("hy", "automacro", doc.HyAutodocDirective)
+
+    app.registry.add_documenter("hy:tag", doc.HyTagDocumenter)
+    app.add_directive_to_domain("hy", "autotag", doc.HyAutodocDirective)
 
     app.registry.add_documenter("hy:method", doc.HyMethodDocumenter)
     app.add_directive_to_domain("hy", "automethod", doc.HyAutodocDirective)

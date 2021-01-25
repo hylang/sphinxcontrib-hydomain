@@ -13,6 +13,8 @@ Hy AutoDocs
 
 .. hy:automodule:: dummy_module
   :members:
+  :macros:
+  :tags:
   :undoc-members:
 
 .. hy:autodecorator:: dummy_module.adecorator

@@ -11,7 +11,7 @@ import hy
 from docutils.nodes import Node
 from docutils.statemachine import StringList
 from sphinx import version_info
-from sphinx.ext.autodoc import ALL, INSTANCEATTR
+from sphinx.ext.autodoc import ALL, INSTANCEATTR, bool_option
 from sphinx.ext.autodoc import Documenter as PyDocumenter
 from sphinx.ext.autodoc import FunctionDocumenter as PyFunctionDocumenter
 from sphinx.ext.autodoc import MethodDocumenter as PyMethodDocumenter
@@ -160,7 +160,8 @@ def import_object(
     objtype: str = "",
     attrgetter: Callable[[Any, str], Any] = safe_getattr,
     warningiserror: bool = False,
-    macro: bool=False
+    macro: bool = False,
+    tag: bool = False
 ) -> Any:
     if objpath:
         logger.debug("[autodoc] from %s import %s", modname, ".".join(objpath))
@@ -192,6 +193,13 @@ def import_object(
             attrname = objpath[0]
             mangled_name = hy.mangle(attrname)
             obj = getattr(obj, "__dict__", {}).get("__macros__", {})[mangled_name]
+            logger.debug("[autodoc] => %r", obj)
+            object_name = attrname
+            return [module, parent, object_name, obj]
+        elif tag:
+            attrname = objpath[0]
+            mangled_name = hy.mangle(attrname)
+            obj = getattr(obj, "__dict__", {}).get("__tags__", {})[mangled_name]
             logger.debug("[autodoc] => %r", obj)
             object_name = attrname
             return [module, parent, object_name, obj]
@@ -390,6 +398,7 @@ def get_module_members(module: Any):
 
     members = {}
     macros = safe_getattr(module, "__macros__", {})
+    tags = safe_getattr(module, "__tags__", {})
 
     for name in dir(module):
         try:
@@ -402,6 +411,14 @@ def get_module_members(module: Any):
     for name, value in macros.items():
         try:
             setattr(value, "__macro__", True)
+            name = hy.unmangle(name)
+            members[name] = (name, value)
+        except AttributeError:
+            continue
+
+    for name, value in tags.items():
+        try:
+            setattr(value, "__tag__", True)
             name = hy.unmangle(name)
             members[name] = (name, value)
         except AttributeError:
@@ -612,7 +629,9 @@ class HyDocumenter(PyDocumenter):
         # document non-skipped members
         memberdocumenters = []  # type: List[Tuple[Documenter, bool]]
         wanted_members = self.filter_members(members, want_all)
-        module_macros = [member for member in members if getattr(member, "__macro__", False)]
+        module_macros = [
+            member for member in members if getattr(member, "__macro__", False)
+        ]
         for (mname, member, isattr) in wanted_members:
             classes = [
                 cls
@@ -646,6 +665,9 @@ class HyDocumenter(PyDocumenter):
 
 
 class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
+    option_spec = PyModuleDocumenter.option_spec.copy()
+    option_spec.update({"macros": bool_option, "tags": bool_option})
+
     def add_directive_header(self, sig: str) -> None:
         return super().add_directive_header(sig)
 
@@ -681,7 +703,9 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
     def get_object_members(self, want_all: bool):
         if want_all:
             members = get_module_members(self.object)
-            members = [member for member in members if not member[0].startswith("-hy-anon-var")]
+            members = [
+                member for member in members if not member[0].startswith("-hy-anon-var")
+            ]
             if not self.__all__:
                 # for implicit module members, check __module__ to avoid
                 # documenting imported objects
@@ -689,7 +713,15 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
             else:
                 ret = []
                 for name, value in members:
-                    if hy.mangle(name) in self.__all__ or getattr(value, "__macro__", False):
+                    is_wanted_macro = (
+                        getattr(value, "__macro__", False) and self.options.macros
+                    )
+
+                    is_wanted_tag = (
+                        getattr(value, "__tag__", False) and self.options.tags
+                    )
+
+                    if hy.mangle(name) in self.__all__ or is_wanted_macro or is_wanted_tag:
                         ret.append(ObjectMember(name, value))
                     else:
                         ret.append(ObjectMember(name, value, skipped=True))
@@ -730,17 +762,19 @@ class HyFunctionDocumenter(HyDocumenter, PyFunctionDocumenter):
         super().add_directive_header(sig)
 
         if inspect.iscoroutinefunction(self.object):
-            self.add_line('   :async:', sourcename)
+            self.add_line("   :async:", sourcename)
 
 
 class HyMacroDocumenter(HyFunctionDocumenter):
-    objtype = "function"
+    objtype = "macro"
     member_order = 30
-    priority = 3 # Above regular function documenter
+    priority = 3  # Above regular function documenter
 
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):
-        return super().can_document_member(member, membername, isattr, parent) and getattr(member, "__macro__", False)
+        return super().can_document_member(
+            member, membername, isattr, parent
+        ) and getattr(member, "__macro__", False)
 
     def import_object(self, raiseerror: bool = False) -> bool:
         """Import the object given by *self.modname* and *self.objpath* and set
@@ -749,10 +783,14 @@ class HyMacroDocumenter(HyFunctionDocumenter):
         """
         with mock(self.config.autodoc_mock_imports):
             try:
-                ret = import_object(self.modname, self.objpath, self.objtype,
-                                    attrgetter=self.get_attr,
-                                    warningiserror=self.config.autodoc_warningiserror,
-                                    macro=True)
+                ret = import_object(
+                    self.modname,
+                    self.objpath,
+                    self.objtype,
+                    attrgetter=self.get_attr,
+                    warningiserror=self.config.autodoc_warningiserror,
+                    macro=True,
+                )
                 self.module, self.parent, self.object_name, self.object = ret
                 return True
             except ImportError as exc:
@@ -763,6 +801,42 @@ class HyMacroDocumenter(HyFunctionDocumenter):
                     self.env.note_reread()
                     return False
 
+
+class HyTagDocumenter(HyFunctionDocumenter):
+    objtype = "tag"
+    member_order = 30
+    priority = 3  # Above regular function documenter
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):
+        return super().can_document_member(
+            member, membername, isattr, parent
+        ) and getattr(member, "__tag__", False)
+
+    def import_object(self, raiseerror: bool = False) -> bool:
+        """Import the object given by *self.modname* and *self.objpath* and set
+        it as *self.object*.
+        Returns True if successful, False if an error occurred.
+        """
+        with mock(self.config.autodoc_mock_imports):
+            try:
+                ret = import_object(
+                    self.modname,
+                    self.objpath,
+                    self.objtype,
+                    attrgetter=self.get_attr,
+                    warningiserror=self.config.autodoc_warningiserror,
+                    tag=True
+                )
+                self.module, self.parent, self.object_name, self.object = ret
+                return True
+            except ImportError as exc:
+                if raiseerror:
+                    raise
+                else:
+                    logger.warning(exc.args[0])
+                    self.env.note_reread()
+                    return False
 
 
 class HyMethodDocumenter(HyDocumenter, PyMethodDocumenter):
@@ -877,4 +951,8 @@ class HyExceptionDocumenter(HyClassDocumenter):
     def can_document_member(
         cls, member: Any, membername: str, isattr: bool, parent: Any
     ) -> bool:
-        return is_hy(member, membername, parent) and isinstance(member, type) and issubclass(member, BaseException)
+        return (
+            is_hy(member, membername, parent)
+            and isinstance(member, type)
+            and issubclass(member, BaseException)
+        )
