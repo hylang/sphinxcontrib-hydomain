@@ -27,8 +27,11 @@ some additional text"
   "hello world"
   `(+ ~n ~n ~n))
 
+(defn ^ [a b]
+  "hello world")
 
-(defall a-func? Point adecorator MyError GLOBAL-VAR Vector async-func obj-param-test optional-bug)
+
+(defall a-func? Point adecorator MyError GLOBAL-VAR Vector async-func obj-param-test optional-bug ^)
 
 ;; TODO
 (setv GLOBAL-VAR "hello world")

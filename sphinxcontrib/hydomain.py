@@ -46,7 +46,7 @@ import sphinxcontrib.hy_documenters as doc
 logging.getLogger().setLevel(logging.DEBUG)
 
 hy_sexp_sig_re = re.compile(
-    r"^\(([\w.]*\.)?(.*?)\s*(?:\s*\^(.*?)\s*)?(?:(?:\[(?:\s*(.*)\s*\]\))?)|(?:\)))$"
+    r"^\(([\w.]*\.)?(.+?)\s*(?:\s*\^(.*?)\s*)?(?:(?:\[(?:\s*(.*)\s*\]\))?)|(?:\)))$"
 )
 hy_var_re = re.compile(r"^([\w.]*\.)?(.+?)$")
 
