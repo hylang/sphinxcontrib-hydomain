@@ -46,8 +46,6 @@ from sphinx.util.inspect import (
 )
 from sphinx.util.typing import is_system_TypeVar
 
-logging.getLogger().setLevel(logging.DEBUG)
-
 logger = logging.getLogger("hy-domain")
 
 hy_ext_sig_re = re.compile(
