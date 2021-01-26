@@ -23,6 +23,8 @@ Hy AutoDocs
 Py Autodoc
 ==========
 
+.. py:function:: objarg(something=<object object>)
+
 .. automodule:: dummy_py_module
    :members:
    :undoc-members:

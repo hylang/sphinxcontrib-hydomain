@@ -157,6 +157,53 @@ def _parse_arglist(arglist: str, env: BuildEnvironment = None):
     return params
 
 
+def _pseudo_parse_arglist(signode: desc_signature, arglist: str) -> None:
+    """"Parse" a list of arguments separated by commas.
+    Arguments can have "optional" annotations given by enclosing them in
+    brackets.  Currently, this will split at any comma, even if it's inside a
+    string literal (e.g. default argument value).
+    """
+    paramlist = addnodes.desc_parameterlist()
+    stack = [paramlist]  # type: List[Element]
+    try:
+        raise IndexError()
+        # for argument in arglist.split(','):
+        #     argument = argument.strip()
+        #     ends_open = ends_close = 0
+        #     while argument.startswith('['):
+        #         stack.append(addnodes.desc_optional())
+        #         stack[-2] += stack[-1]
+        #         argument = argument[1:].strip()
+        #     while argument.startswith(']'):
+        #         stack.pop()
+        #         argument = argument[1:].strip()
+        #     while argument.endswith(']') and not argument.endswith('[]'):
+        #         ends_close += 1
+        #         argument = argument[:-1].strip()
+        #     while argument.endswith('['):
+        #         ends_open += 1
+        #         argument = argument[:-1].strip()
+        #     if argument:
+        #         stack[-1] += addnodes.desc_parameter(argument, argument)
+        #     while ends_open:
+        #         stack.append(addnodes.desc_optional())
+        #         stack[-2] += stack[-1]
+        #         ends_open -= 1
+        #     while ends_close:
+        #         stack.pop()
+        #         ends_close -= 1
+        # if len(stack) != 1:
+        #     raise IndexError
+    except IndexError:
+        # if there are too few or too many elements on the stack, just give up
+        # and treat the whole argument list as one argument, discarding the
+        # already partially populated paramlist node
+        paramlist = addnodes.desc_parameterlist()
+        paramlist += addnodes.desc_parameter(arglist, arglist)
+        signode += paramlist
+    else:
+        signode += paramlist
+
 def type_to_xref(text: str, env: BuildEnvironment = None) -> addnodes.pending_xref:
     """Convert a type string to a cross reference node."""
     if text == "None":
@@ -382,11 +429,15 @@ class HyObject(PyObject):
         if arglist:
             try:
                 signode += _parse_arglist(arglist, self.env)
+            except SyntaxError:
+                # fallback to parse arglist original parser.
+                # it supports to represent optional arguments (ex. "func(foo [, bar])")
+                _pseudo_parse_arglist(signode, arglist)
             except NotImplementedError as exc:
                 logging.warning(
                     "could not parse arglist (%r): %s",  exc
                 )
-                # _pseudo_parse_arglist(signode, arglist)
+                _pseudo_parse_arglist(signode, arglist)
         else:
             if self.needs_arglist():
                 # for callables, add an empty parameter list
@@ -523,7 +574,6 @@ class HyTag(HyFunction):
         self.state.document.note_explicit_target(signode)
 
         domain = cast(HyDomain, self.env.get_domain("hy"))
-        plog(fullname, self.objtype, node_id, signode)
         domain.note_object(fullname, self.objtype, node_id, location=signode)
 
         if "noindexentry" not in self.options:

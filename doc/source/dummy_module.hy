@@ -40,8 +40,8 @@ some additional text"
 
 ;; TODO arbitrary object default parameters
 ;; WARNING crashes compiler
-;; (setv -sentinel (object))
-;; (defn obj-param-test [&optional [something -sentinel]])
+(setv -sentinel (object))
+(defn obj-param-test [&optional [something -sentinel]])
 
 (defn optional-bug [&optional [g "G"]])
 
