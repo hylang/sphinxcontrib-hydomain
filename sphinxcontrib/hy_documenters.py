@@ -28,6 +28,8 @@ from sphinx.ext.autodoc.directive import (
     parse_generated_content,
     process_documenter_options,
 )
+import hy.extra.reserved as reserved
+import hy.core.macros
 from sphinx.ext.autodoc.importer import Attribute, import_module
 from sphinx.ext.autodoc.mock import mock
 from sphinx.pycode import ModuleAnalyzer, PycodeError
@@ -400,6 +402,8 @@ def get_module_members(module: Any):
     members = {}
     macros = safe_getattr(module, "__macros__", {})
     tags = safe_getattr(module, "__tags__", {})
+    is_core_module = "hy.core" in module.__name__
+    reserved_hy_names = reserved.names()
 
     for name in dir(module):
         try:
@@ -413,7 +417,8 @@ def get_module_members(module: Any):
         try:
             setattr(value, "__macro__", True)
             name = hy.unmangle(name)
-            members[name] = (name, value)
+            if name not in reserved_hy_names or is_core_module:
+                members[name] = (name, value)
         except AttributeError:
             continue
 
@@ -431,8 +436,8 @@ def get_module_members(module: Any):
     for name, value in tags.items():
         try:
             setattr(value, "__tag__", True)
-            name = hy.unmangle(name)
-            ret.append((name, value))
+            if name not in reserved_hy_names or is_core_module:
+                ret.append((name, value))
         except AttributeError:
             continue
 

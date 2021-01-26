@@ -1,6 +1,6 @@
 # AutoDoc
 - [ ] Reserved names populating other modules randomly *
-- [ ] ^ not showing up when used as non annotation value *
+- [x] ^ not showing up when used as non annotation value *
 - [ ] ModuleDocumenter
   - [x] anon var private members
   - [x] macros
@@ -21,7 +21,7 @@
   - [x] remove &name param from signature *
 - [x] autotag *
 - [x] FunctionDocumenter
-  - [ ] object default value (ie. _sentinel) *
+  - [x] object default value (ie. _sentinel) *
   - [x] mangling parameter names
   - [x] async prop
 - [x] DecoratorDocumenter
