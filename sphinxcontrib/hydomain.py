@@ -50,6 +50,19 @@ hy_sexp_sig_re = re.compile(
 )
 hy_var_re = re.compile(r"^([\w.]*\.)?(.+?)$")
 
+# ** Node Types
+class desc_hyparameterlist(addnodes.desc_parameterlist):
+    child_text_separator = " "
+
+
+class desc_hyparameter(addnodes.desc_parameter):
+    ...
+
+
+class desc_hyannotation(addnodes.desc_annotation):
+    def astext(self) -> str:
+        return "^" + super().astext()
+
 # ** Helper methods
 def pp(a, *args):
     print()
@@ -163,7 +176,7 @@ def _pseudo_parse_arglist(signode: desc_signature, arglist: str) -> None:
     brackets.  Currently, this will split at any comma, even if it's inside a
     string literal (e.g. default argument value).
     """
-    paramlist = addnodes.desc_parameterlist()
+    paramlist = desc_hyparameterlist()
     stack = [paramlist]  # type: List[Element]
     try:
         raise IndexError()
@@ -198,11 +211,12 @@ def _pseudo_parse_arglist(signode: desc_signature, arglist: str) -> None:
         # if there are too few or too many elements on the stack, just give up
         # and treat the whole argument list as one argument, discarding the
         # already partially populated paramlist node
-        paramlist = addnodes.desc_parameterlist()
-        paramlist += addnodes.desc_parameter(arglist, arglist)
+        paramlist = desc_hyparameterlist()
+        paramlist += desc_hyparameter(arglist, arglist)
         signode += paramlist
     else:
         signode += paramlist
+
 
 def type_to_xref(text: str, env: BuildEnvironment = None) -> addnodes.pending_xref:
     """Convert a type string to a cross reference node."""
@@ -301,20 +315,6 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
         return result
     except SyntaxError:
         return [type_to_xref(annotation, env)]
-
-
-# ** Node Types
-class desc_hyparameterlist(addnodes.desc_parameterlist):
-    child_text_separator = " "
-
-
-class desc_hyparameter(addnodes.desc_parameter):
-    ...
-
-
-class desc_hyannotation(addnodes.desc_annotation):
-    def astext(self) -> str:
-        return "^" + super().astext()
 
 
 # ** Objects
