@@ -52,7 +52,7 @@ hy_ext_sig_re = re.compile(
     r"""^\(
            (?P<module>[\w.]+::)?                       # Explicit module name
            (?P<classes>.*\.)?                         # Module and/or class name(s)
-           (?P<object>.*?) \s*                        # Thing name
+           (?P<object>.+?) \s*                        # Thing name
            (?:\s*\^(?P<retann>.*?)\s*)?               # Optional: return annotation
            (?:                                        # Arguments and close or just close
             (?:\[(?:\s*(?P<arguments>.*)\s*\]\))?) | # Optional: arguments
@@ -367,6 +367,7 @@ def signature(obj, bound_method=False, macro=False):
     def render_arg(arg, default=None):
         ann = argspec.annotations.get(arg)
         ann = f"^{stringify(ann)}" if ann is not None else ""
+        print(default)
         arg = hy.unmangle(str(arg))
         return (
             (f"{ann} {arg}" if ann else arg)
