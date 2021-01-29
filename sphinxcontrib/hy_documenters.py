@@ -339,12 +339,12 @@ def signature(obj, bound_method=False, macro=False):
         (arg,)
         for arg in argspec.args[: len(argspec.args) - (len(argspec.defaults or []))]
     ]
+    defaults = list(islice(argspec.args, len(args or []), None))
+    defaults = list(zip(defaults, argspec.defaults or []))
+
     if bound_method or macro:
         if len(args) > 0 and args[0][0] in map(hy.mangle, ("self", "&name")):
             args.pop(0)
-    defaults = islice(argspec.args, len(args or []), None)
-    defaults = list(zip(defaults, argspec.defaults or []))
-
     kwonlydefaults = argspec.kwonlydefaults.items() if argspec.kwonlydefaults else []
     kwonly = [
         arg
