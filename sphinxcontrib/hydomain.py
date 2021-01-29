@@ -63,6 +63,10 @@ class desc_hyannotation(addnodes.desc_annotation):
     def astext(self) -> str:
         return "^" + super().astext()
 
+
+class desc_hyreturns(addnodes.desc_returns):
+    def astext(self) -> str:
+        return ' -> ^' + super().astext()
 # ** Helper methods
 def pp(a, *args):
     print()
@@ -420,11 +424,6 @@ class HyObject(PyObject):
 
         signode += addnodes.desc_name(name, name)
 
-        if retann:
-            pyretann = hy2py(retann)
-            children = _parse_annotation(pyretann, self.env)
-            signode += nodes.Text(" ")
-            signode += desc_hyannotation(pyretann, "", *children)
 
         if arglist:
             try:
@@ -449,6 +448,14 @@ class HyObject(PyObject):
 
         if should_wrap:
             signode += addnodes.desc_addname(")", ")")
+
+
+        if retann:
+            pyretann = hy2py(retann)
+            children = _parse_annotation(pyretann, self.env)
+            signode += nodes.Text(" ")
+            signode += desc_hyreturns(pyretann, "", *children)
+
         return fullname, prefix
 
     def add_target_and_index(self, name_cls: Tuple[str, str], sig: str, signode):
@@ -1235,17 +1242,30 @@ class HyDomain(Domain):
 
 
 # ** Node Renderers
+def v_hyreturns(self, node):
+    self.body.append("  → ^")
+    # self.first_param = True
+    # if len(node):
+    #     self.body.append(" ")
+    #     # self.body.append("[")
+    # self.param_separator = node.child_text_separator
+
+
+def d_hyreturns(self, node):
+    pass
+
 def v_hyparameterlist(self, node):
     self.first_param = True
     if len(node):
         self.body.append(" ")
-        self.body.append("[")
+        # self.body.append("[")
     self.param_separator = node.child_text_separator
 
 
 def d_hyparameterlist(self, node):
-    if len(node):
-        self.body.append("]")
+    pass
+    # if len(node):
+    #     self.body.append("]")
 
 
 def v_html_hyparameter(self, node):
@@ -1292,6 +1312,7 @@ def d_html_hyannotation(self, node):
 # ** Register with Sphinx
 def setup(app: Sphinx):
     app.add_domain(HyDomain)
+    app.add_node(desc_hyreturns, html=(v_hyreturns, d_hyreturns))
     app.add_node(desc_hyparameterlist, html=(v_hyparameterlist, d_hyparameterlist))
     app.add_node(desc_hyparameter, html=(v_html_hyparameter, d_html_hyparameter))
     app.add_node(desc_hyannotation, html=(v_html_hyannotation, d_html_hyannotation))

@@ -367,7 +367,6 @@ def signature(obj, bound_method=False, macro=False):
     def render_arg(arg, default=None):
         ann = argspec.annotations.get(arg)
         ann = f"^{stringify(ann)}" if ann is not None else ""
-        print(default)
         arg = hy.unmangle(str(arg))
         return (
             (f"{ann} {arg}" if ann else arg)
