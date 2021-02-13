@@ -140,7 +140,7 @@ def match_hy_sig(s: str) -> tuple:
 
     match = hy_var_sig_re.match(s)
     if match:
-        return *match.groups(), None, None
+        return (*match.groups(), None, None)
 
     raise AttributeError()
 
