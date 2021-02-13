@@ -4,7 +4,6 @@ import sys
 import traceback
 from inspect import getfullargspec
 from itertools import islice, starmap
-from pprint import pp
 from typing import Any, Callable, List, Optional, Tuple, TypeVar
 
 import hy
@@ -70,14 +69,6 @@ hy_var_sig_re = re.compile(
 )
 
 NoneType = type(None)
-
-
-def plog(*args):
-    pp("----------------------")
-    for arg in args:
-        pp(arg)
-    pp("----------------------")
-
 
 def get_object_members(subject: Any, objpath: List[str], attrgetter, analyzer=None):
     """Get members and attributes of target object."""

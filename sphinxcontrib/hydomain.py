@@ -18,7 +18,6 @@ import logging
 import re
 import sys
 from inspect import Parameter
-from pprint import pp as _pp
 from typing import Any, Dict, Iterator, List, Tuple, cast
 
 import astor
@@ -68,14 +67,6 @@ class desc_hyreturns(addnodes.desc_returns):
     def astext(self) -> str:
         return ' -> ^' + super().astext()
 # ** Helper methods
-def pp(a, *args):
-    print()
-    if args:
-        _pp((a, *args))
-    else:
-        _pp(a)
-
-
 def bool_option(arg):
     return True
 
@@ -94,14 +85,6 @@ def signature_from_str(signature: str) -> inspect.Signature:
     function = cast(ast.FunctionDef, module.body[0])
 
     return signature_from_ast(function)
-
-
-def plog(*args):
-    pp("----------------------")
-    for arg in args:
-        pp(arg)
-    pp("----------------------")
-
 
 def _parse_arglist(arglist: str, env: BuildEnvironment = None):
     params = desc_hyparameterlist(arglist)
@@ -294,7 +277,6 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
 
             return result
         else:
-            # pp("else", node)
             if sys.version_info >= (3, 6):
                 if isinstance(node, ast.Constant):
                     if node.value is Ellipsis:
