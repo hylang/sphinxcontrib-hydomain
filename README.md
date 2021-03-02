@@ -1,4 +1,5 @@
 # AutoDoc
+- [ ] Escape string optional parameters *
 - [x] Reserved names populating other modules randomly *
 - [x] ^ not showing up when used as non annotation value *
 - [ ] ModuleDocumenter

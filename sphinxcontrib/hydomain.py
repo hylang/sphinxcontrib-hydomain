@@ -99,7 +99,7 @@ def signature_from_str(signature: str) -> inspect.Signature:
 def _parse_arglist(arglist: str, env: BuildEnvironment = None):
     params = desc_hyparameterlist(arglist)
     sig = signature_from_str("[%s]" % arglist)
-    first_default = True
+    # first_default = True
     last_kind = None
 
     for param in sig.parameters.values():
@@ -113,15 +113,15 @@ def _parse_arglist(arglist: str, env: BuildEnvironment = None):
         ):
             # PEP-3102: Separator for Keyword Only Parameter: *
             params += desc_hyparameter(
-                "", "", addnodes.desc_sig_operator("", "&kwonly")
+                "", "", addnodes.desc_sig_operator("", "*")
             )
 
         node = desc_hyparameter()
-        if param.default is not param.empty and first_default:
-            params += desc_hyparameter(
-                "", "", addnodes.desc_sig_operator("", "&optional")
-            )
-            first_default = False
+        # if param.default is not param.empty and first_default:
+        #     params += desc_hyparameter(
+        #         "", "", addnodes.desc_sig_operator("", "")
+        #     )
+        #     first_default = False
 
         def annotate(param):
             nonlocal node
@@ -131,12 +131,12 @@ def _parse_arglist(arglist: str, env: BuildEnvironment = None):
                 node += nodes.Text(" ")
 
         if param.kind == param.VAR_POSITIONAL:
-            node += addnodes.desc_sig_operator(" ", "&rest")
+            node += addnodes.desc_sig_operator(" ", "#*")
             node += nodes.Text(" ")
             annotate(param)
             node += addnodes.desc_sig_name("", hy.unmangle(param.name))
         elif param.kind == param.VAR_KEYWORD:
-            node += addnodes.desc_sig_operator("", "&kwargs")
+            node += addnodes.desc_sig_operator("", "#**")
             node += nodes.Text(" ")
             annotate(param)
             node += addnodes.desc_sig_name("", hy.unmangle(param.name))

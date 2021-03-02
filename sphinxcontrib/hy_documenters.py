@@ -346,10 +346,10 @@ def signature(obj, bound_method=False, macro=False):
 
     sections = [
         [args, None],
-        [defaults, "&optional"],
-        [varargs, "&rest"],
-        [kwargs, "&kwonly"],
-        [varkwargs, "&kwargs"],
+        [defaults, None],
+        [varargs, "#*"],
+        [kwargs, "*"],
+        [varkwargs, "#**"],
     ]
 
     def render_arg(arg, default=None):
@@ -362,17 +362,27 @@ def signature(obj, bound_method=False, macro=False):
             else f"{ann} [{arg} {default}]"
         )
 
+    def render_vararg(arg, opener):
+        ann = argspec.annotations.get(arg)
+        ann = f"^{stringify(ann)}" if ann is not None else ""
+        arg = hy.unmangle(str(arg))
+        return f"{ann} {opener} {arg}" if ann else f"{opener} {arg}"
+
     def format_section(args, opener):
         if not args:
             return ""
 
-        args = list(starmap(render_arg, args))
-        opener = opener + " " if opener else ""
-        return opener + " ".join(args)
+        if opener in ["#*", "#**"]:
+            return render_vararg(args[0][0], opener)
+        else:
+            args = list(starmap(render_arg, args))
+            opener = f"{opener} " if opener else ""
+            return opener + " ".join(args)
 
     arg_string = " ".join(
         filter(None, (format_section(args, opener) for args, opener in sections))
     )
+    logger.info(("HERE", arg_string))
 
     retann = argspec.annotations.get("return")
     retann = stringify(retann) + " " if retann is not None else ""
