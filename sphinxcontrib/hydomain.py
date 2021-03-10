@@ -29,8 +29,14 @@ from sphinx.addnodes import desc_signature, pending_xref
 from sphinx.application import Sphinx
 from sphinx.directives import directives
 from sphinx.domains import Domain, ObjType
-from sphinx.domains.python import (ModuleEntry, ObjectEntry, PyModule,
-                                   PyObject, PythonModuleIndex, pairindextypes)
+from sphinx.domains.python import (
+    ModuleEntry,
+    ObjectEntry,
+    PyModule,
+    PyObject,
+    PythonModuleIndex,
+    pairindextypes,
+)
 from sphinx.environment import BuildEnvironment
 from sphinx.locale import _, __
 from sphinx.pycode.ast import parse as ast_parse
@@ -49,6 +55,7 @@ hy_sexp_sig_re = re.compile(
 )
 hy_var_re = re.compile(r"^([\w.]*\.)?(.+?)$")
 
+
 # ** Node Types
 class desc_hyparameterlist(addnodes.desc_parameterlist):
     child_text_separator = " "
@@ -65,7 +72,9 @@ class desc_hyannotation(addnodes.desc_annotation):
 
 class desc_hyreturns(addnodes.desc_returns):
     def astext(self) -> str:
-        return ' -> ^' + super().astext()
+        return " -> ^" + super().astext()
+
+
 # ** Helper methods
 def bool_option(arg):
     return True
@@ -85,6 +94,7 @@ def signature_from_str(signature: str) -> inspect.Signature:
     function = cast(ast.FunctionDef, module.body[0])
 
     return signature_from_ast(function)
+
 
 def _parse_arglist(arglist: str, env: BuildEnvironment = None):
     params = desc_hyparameterlist(arglist)
@@ -158,13 +168,13 @@ def _parse_arglist(arglist: str, env: BuildEnvironment = None):
 
 
 def _pseudo_parse_arglist(signode: desc_signature, arglist: str) -> None:
-    """"Parse" a list of arguments separated by commas.
+    """ "Parse" a list of arguments separated by commas.
     Arguments can have "optional" annotations given by enclosing them in
     brackets.  Currently, this will split at any comma, even if it's inside a
     string literal (e.g. default argument value).
     """
     paramlist = desc_hyparameterlist()
-    stack = [paramlist]  # type: List[Element]
+    # stack = [paramlist]  # type: List[Element]
     try:
         raise IndexError()
         # for argument in arglist.split(','):
@@ -406,7 +416,6 @@ class HyObject(PyObject):
 
         signode += addnodes.desc_name(name, name)
 
-
         if arglist:
             try:
                 signode += _parse_arglist(arglist, self.env)
@@ -415,9 +424,7 @@ class HyObject(PyObject):
                 # it supports to represent optional arguments (ex. "func(foo [, bar])")
                 _pseudo_parse_arglist(signode, arglist)
             except NotImplementedError as exc:
-                logging.warning(
-                    "could not parse arglist (%r): %s",  exc
-                )
+                logging.warning("could not parse arglist (%r): %s", exc)
                 _pseudo_parse_arglist(signode, arglist)
         else:
             if self.needs_arglist():
@@ -430,7 +437,6 @@ class HyObject(PyObject):
 
         if should_wrap:
             signode += addnodes.desc_addname(")", ")")
-
 
         if retann:
             pyretann = hy2py(retann)
@@ -515,9 +521,7 @@ class HyObject(PyObject):
 
 class HyFunction(HyObject):
     option_spec = HyObject.option_spec.copy()
-    option_spec.update({
-        "async": directives.flag
-    })
+    option_spec.update({"async": directives.flag})
 
     def get_index_text(self, modname: str, name: Tuple[str, str]) -> str:
         return None
@@ -638,8 +642,6 @@ class HyTag(HyFunction):
         if prefix:
             signode += addnodes.desc_addname(prefix, prefix)
 
-
-
         if retann:
             pyretann = hy2py(retann)
             children = _parse_annotation(pyretann, self.env)
@@ -650,9 +652,7 @@ class HyTag(HyFunction):
             try:
                 signode += _parse_arglist(arglist, self.env)
             except NotImplementedError as exc:
-                logging.warning(
-                    "could not parse arglist (%r): %s",  exc
-                )
+                logging.warning("could not parse arglist (%r): %s", exc)
                 # _pseudo_parse_arglist(signode, arglist)
         else:
             if self.needs_arglist():
@@ -672,7 +672,10 @@ class HyVariable(HyObject):
     option_spec = HyObject.option_spec.copy()
 
     option_spec.update(
-        {"type": directives.unchanged, "value": directives.unchanged,}
+        {
+            "type": directives.unchanged,
+            "value": directives.unchanged,
+        }
     )
 
     def handle_signature(self, sig: str, signode: desc_signature) -> Tuple[str, str]:
@@ -744,7 +747,9 @@ class HyClass(HyObject):
 
     option_spec = HyObject.option_spec.copy()
     option_spec.update(
-        {"final": directives.flag,}
+        {
+            "final": directives.flag,
+        }
     )
 
     allow_nesting = True
@@ -879,7 +884,10 @@ class HyAttribute(HyObject):
 
     option_spec = PyObject.option_spec.copy()
     option_spec.update(
-        {"type": directives.unchanged, "value": directives.unchanged,}
+        {
+            "type": directives.unchanged,
+            "value": directives.unchanged,
+        }
     )
 
     def handle_signature(self, sig: str, signode: desc_signature) -> Tuple[str, str]:
@@ -988,7 +996,6 @@ class HyDomain(Domain):
         "meth": HyXRefRole(),
         "attr": HyXRefRole(),
         "exc": HyXRefRole(),
-        "class": HyXRefRole(),
         "const": HyXRefRole(),
         "mod": HyXRefRole(),
         "obj": HyXRefRole(),
@@ -1235,6 +1242,7 @@ def v_hyreturns(self, node):
 
 def d_hyreturns(self, node):
     pass
+
 
 def v_hyparameterlist(self, node):
     self.first_param = True

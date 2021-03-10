@@ -4,13 +4,11 @@ import sys
 import traceback
 from inspect import getfullargspec
 from itertools import islice, starmap
-from typing import Any, Callable, List, Optional, Tuple, TypeVar
+from typing import Any, Callable, List, TypeVar, Dict
 
 import hy
 from docutils.nodes import Node
-from docutils.statemachine import StringList
-from sphinx import version_info
-from sphinx.ext.autodoc import ALL, INSTANCEATTR, bool_option
+from sphinx.ext.autodoc import ALL, bool_option
 from sphinx.ext.autodoc import Documenter as PyDocumenter
 from sphinx.ext.autodoc import FunctionDocumenter as PyFunctionDocumenter
 from sphinx.ext.autodoc import MethodDocumenter as PyMethodDocumenter
@@ -19,7 +17,7 @@ from sphinx.ext.autodoc import ModuleDocumenter as PyModuleDocumenter
 from sphinx.ext.autodoc import PropertyDocumenter as PyPropertyDocumenter
 from sphinx.ext.autodoc import AttributeDocumenter as PyAttributeDocumenter
 from sphinx.ext.autodoc import DecoratorDocumenter as PyDecoratorDocumenter
-from sphinx.ext.autodoc import ObjectMember, ObjectMembers, special_member_re
+from sphinx.ext.autodoc import ObjectMember
 from sphinx.ext.autodoc.directive import (
     AutodocDirective,
     DocumenterBridge,
@@ -31,19 +29,17 @@ import hy.extra.reserved as reserved
 import hy.core.macros
 from sphinx.ext.autodoc.importer import Attribute, import_module
 from sphinx.ext.autodoc.mock import mock
-from sphinx.pycode import ModuleAnalyzer, PycodeError
+from sphinx.locale import __
 from sphinx.util import inspect
-from sphinx.util.docstrings import extract_metadata
 from sphinx.util.inspect import (
     getall,
     getannotations,
-    getdoc,
     getmro,
     getslots,
     isenumclass,
     safe_getattr,
 )
-from sphinx.util.typing import is_system_TypeVar
+from sphinx.util.typing import is_system_TypeVar, _stringify_py36
 
 logger = logging.getLogger("hy-domain")
 
@@ -53,7 +49,7 @@ hy_ext_sig_re = re.compile(
            (?P<classes>.*\.)?                         # Module and/or class name(s)
            (?P<object>.+?) \s*                        # Thing name
            (?:\s*\^(?P<retann>.*?)\s*)?               # Optional: return annotation
-           (?:                                        # Arguments and close or just close
+           (?:                                        # Arguments/close or just close
             (?:\[(?:\s*(?P<arguments>.*)\s*\]\))?) | # Optional: arguments
             (?:\)))
         $""",
@@ -69,6 +65,7 @@ hy_var_sig_re = re.compile(
 )
 
 NoneType = type(None)
+
 
 def get_object_members(subject: Any, objpath: List[str], attrgetter, analyzer=None):
     """Get members and attributes of target object."""
@@ -117,7 +114,7 @@ def get_object_members(subject: Any, objpath: List[str], attrgetter, analyzer=No
     for i, cls in enumerate(getmro(subject)):
         try:
             for name in getannotations(cls):
-                name = unmangle(cls, name)
+                name = hy.unmangle(cls, name)
                 if name and name not in members:
                     members[name] = Attribute(name, i == 0, INSTANCEATTR)
         except AttributeError:
@@ -242,7 +239,7 @@ def import_object(
 
 def stringify(annotation: Any) -> str:
     """Stringify type annotation object."""
-    from sphinx.util import inspect  # lazy loading
+    # from sphinx.util import inspect  # lazy loading
 
     if isinstance(annotation, str):
         if annotation.startswith("'") and annotation.endswith("'"):
@@ -311,7 +308,7 @@ def _stringify_py37(annotation: Any) -> str:
         elif qualname == "Callable":
             args = ", ".join(stringify(a) for a in annotation.__args__[:-1])
             returns = stringify(annotation.__args__[-1])
-            return "%(of %s [%s] %s)" % (qualname, args, returns)
+            return "(of %s [%s] %s)" % (qualname, args, returns)
         elif str(annotation).startswith("typing.Annotated"):  # for py39+
             return stringify(annotation.__args__[0])
         elif all(is_system_TypeVar(a) for a in annotation.__args__):
@@ -443,9 +440,9 @@ def is_hy(member, membername, parent):
 
 
 class HyAutodocDirective(AutodocDirective):
-    """A directive class for all autodoc directives. It works as a dispatcher of Documenters.
-    It invokes a Documenter on running. After the processing, it parses and returns
-    the generated content by Documenter.
+    """A directive class for all autodoc directives. It works as a dispatcher
+    of Documenters. It invokes a Documenter on running. After the processing,
+    it parses and returns the generated content by Documenter.
     """
 
     option_spec = DummyOptionSpec()
@@ -511,7 +508,7 @@ class HyDocumenter(PyDocumenter):
     def parse_name(self) -> bool:
         try:
             explicit_modname, path, base, args, retann = match_hy_sig(self.name)
-        except AttributeError as e:
+        except AttributeError:
             self.directive.warn(
                 "invalid signature for auto%s (%r)" % self.objtype, self.name
             )
@@ -628,11 +625,11 @@ class HyDocumenter(PyDocumenter):
         members_check_module, members = self.get_object_members(want_all)
 
         # document non-skipped members
-        memberdocumenters = []  # type: List[Tuple[Documenter, bool]]
+        memberdocumenters = []
         wanted_members = self.filter_members(members, want_all)
-        module_macros = [
-            member for member in members if getattr(member, "__macro__", False)
-        ]
+        # module_macros = [
+        #     member for member in members if getattr(member, "__macro__", False)
+        # ]
         for (mname, member, isattr) in wanted_members:
             classes = [
                 cls
