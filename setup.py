@@ -3,7 +3,7 @@ from pathlib import Path
 
 requires = [
     "Sphinx >= 3.3",
-    "hy >= 0.19",
+    "hy >= 0.20",
 ]
 
 def readme():
@@ -15,7 +15,7 @@ def readme():
 setup(
     name='sphinxcontrib-hydomain',
     version='0.1.0',
-    url='https://github.com/allison-casey/hydomain',
+    url='https://github.com/hylang/sphinxcontrib-hydomain',
     license='BSD',
     author='Allison Casey',
     author_email='alliecasey21@gmail.com',
