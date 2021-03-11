@@ -1,25 +1,29 @@
 "Dummy Python Module
 
 some additional text"
-(import [typing [Optional Tuple Dict final]]
+(import [typing [Optional Tuple Dict final List]]
         [functools [wraps]]
         abc
         sys)
 
 ;; TODO Module documenter doesn't pull macros
-(defmacro defall [&rest symbols]
+(defmacro defall [#* symbols]
   "Defines `--all--` using unmangled hy names"
-  `(setv __all__ ~(lfor sym symbols (mangle (name sym)))))
+  `(setv __all__ ~(lfor sym symbols (mangle sym))))
 
-(defmacro ! [&rest body]
+(defmacro optionalmacro [a [b None]])
+
+(defn optionalfunc ^(of List int) [a [b None]])
+
+(defmacro ! [#* body]
   "Macro version of shortened await"
   `(await (~@body)))
 
-(deftag ! [&rest body]
+(defmacro "#!" [#* body]
   "Tag macro for await expression"
   `(await (~@body)))
 
-(defmacro/g! gensymmacro [&rest body]
+(defmacro/g! gensymmacro [#* body]
   "hello world!"
   None)
 
@@ -31,7 +35,9 @@ some additional text"
   "hello world")
 
 
-(defall a-func? Point adecorator MyError GLOBAL-VAR Vector async-func obj-param-test optional-bug ^)
+(defall
+  optionalfunc
+  a-func? Point adecorator MyError GLOBAL-VAR Vector async-func obj-param-test optional-bug ^)
 
 ;; TODO
 (setv GLOBAL-VAR "hello world")
@@ -44,15 +50,15 @@ some additional text"
 ;; TODO arbitrary object default parameters
 ;; WARNING crashes compiler
 (setv -sentinel (object))
-(defn obj-param-test [&optional [something -sentinel]])
+(defn obj-param-test [[something -sentinel]])
 
-(defn optional-bug [&optional [g "G"]])
+(defn optional-bug [[g "G"]])
 
 (defn a-func? ^int [^int a
-                 &optional ^float [c 42.0]
-                 &rest ^str a!rgs
-                 &kwonly ^dict d
-                 &kwargs ^(of Dict str int) kwargs]
+                 ^float [c 42.0]
+                 ^str #* a!rgs
+                 ^dict d
+                 ^(of Dict str int) #** kwargs]
   "Hello World!"
   (+ a b))
 
@@ -61,7 +67,7 @@ some additional text"
 (defn adecorator [f]
   (with-decorator
     wraps
-    (defn wrapped [&rest args &kwargs kwargs]
+    (defn wrapped [#* args #** kwargs]
       (print "Hello World")
       (f #* args #** kwargs)))
   wrapped)

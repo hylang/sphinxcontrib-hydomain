@@ -177,17 +177,10 @@ def import_object(
         obj = module
         parent = None
         object_name = None
-        if macro:
+        if macro or tag:
             attrname = objpath[0]
             mangled_name = hy.mangle(attrname)
             obj = getattr(obj, "__dict__", {}).get("__macros__", {})[mangled_name]
-            logger.debug("[autodoc] => %r", obj)
-            object_name = attrname
-            return [module, parent, object_name, obj]
-        elif tag:
-            attrname = objpath[0]
-            mangled_name = hy.mangle(attrname)
-            obj = getattr(obj, "__dict__", {}).get("__tags__", {})[mangled_name]
             logger.debug("[autodoc] => %r", obj)
             object_name = attrname
             return [module, parent, object_name, obj]
@@ -346,10 +339,10 @@ def signature(obj, bound_method=False, macro=False):
 
     sections = [
         [args, None],
-        [defaults, "&optional"],
-        [varargs, "&rest"],
-        [kwargs, "&kwonly"],
-        [varkwargs, "&kwargs"],
+        [defaults, None],
+        [varargs, "#*"],
+        [kwargs, "*"],
+        [varkwargs, "#**"],
     ]
 
     def render_arg(arg, default=None):
@@ -362,13 +355,22 @@ def signature(obj, bound_method=False, macro=False):
             else f"{ann} [{arg} {default}]"
         )
 
+    def render_vararg(arg, opener):
+        ann = argspec.annotations.get(arg)
+        ann = f"^{stringify(ann)}" if ann is not None else ""
+        arg = hy.unmangle(str(arg))
+        return f"{ann} {opener} {arg}" if ann else f"{opener} {arg}"
+
     def format_section(args, opener):
         if not args:
             return ""
 
-        args = list(starmap(render_arg, args))
-        opener = opener + " " if opener else ""
-        return opener + " ".join(args)
+        if opener in ["#*", "#**"]:
+            return render_vararg(args[0][0], opener)
+        else:
+            args = list(starmap(render_arg, args))
+            opener = f"{opener} " if opener else ""
+            return opener + " ".join(args)
 
     arg_string = " ".join(
         filter(None, (format_section(args, opener) for args, opener in sections))
@@ -386,7 +388,6 @@ def get_module_members(module: Any):
 
     members = {}
     macros = safe_getattr(module, "__macros__", {})
-    tags = safe_getattr(module, "__tags__", {})
     is_core_module = "hy.core" in module.__name__
     reserved_hy_names = reserved.names()
 
@@ -400,7 +401,10 @@ def get_module_members(module: Any):
 
     for name, value in macros.items():
         try:
-            setattr(value, "__macro__", True)
+            if hy.unmangle(name).startswith("#"):
+                setattr(value, "__tag__", True)
+            else:
+                setattr(value, "__macro__", True)
             name = hy.unmangle(name)
             if name not in reserved_hy_names or is_core_module:
                 members[name] = (name, value)
@@ -416,15 +420,6 @@ def get_module_members(module: Any):
                 members[name] = (name, INSTANCEATTR)
     except AttributeError:
         pass
-
-    # Tags come after to allow for tags and macros of same name
-    for name, value in tags.items():
-        try:
-            setattr(value, "__tag__", True)
-            if name not in reserved_hy_names or is_core_module:
-                ret.append((name, value))
-        except AttributeError:
-            continue
 
     return ret
 

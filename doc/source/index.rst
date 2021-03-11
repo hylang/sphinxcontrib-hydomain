@@ -8,6 +8,7 @@
 Hy Domain
 ^^^^^^^^^^^^^^^
 
+
 Hy AutoDocs
 =============
 
@@ -37,6 +38,10 @@ Hy Domain Directives
 .. hy:module:: coordinates
 
 * Link to :hy:class:`Point`
+
+.. hy:macro:: (something [a [b None]])
+
+.. hy:function:: (something-else ^(of List int) [a [b None]])
 
 .. hy:class:: (Point [x y])
 
@@ -115,7 +120,9 @@ Hy Domain Directives
 
 .. hy:module:: object
 
-.. hy:function:: (sum [&rest nums])
+.. hy:function:: (sum [#* nums])
+
+.. hy:function:: (kwargs [#** opts])
 
 Python Domain
 ^^^^^^^^^^^^^^^
