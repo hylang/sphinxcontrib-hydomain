@@ -8,7 +8,7 @@ some additional text"
 
 ;; TODO Module documenter doesn't pull macros
 (defmacro defall [#* symbols]
-  "Defines `--all--` using unmangled hy names"
+  "Defines `__all__` using unmangled hy names"
   `(setv __all__ ~(lfor sym symbols (mangle sym))))
 
 (defmacro optionalmacro [a [b None]])
@@ -37,7 +37,9 @@ some additional text"
 
 (defall
   optionalfunc
-  a-func? Point adecorator MyError GLOBAL-VAR Vector async-func obj-param-test optional-bug ^)
+  a-func? Point adecorator MyError GLOBAL-VAR Vector
+  async-func obj-param-test optional-bug ^ ->something
+  )
 
 ;; TODO
 (setv GLOBAL-VAR "hello world")
@@ -62,6 +64,9 @@ some additional text"
   "Hello World!"
   (+ a b))
 
+(defn ->something [a b c]
+  "leading dash not converted to underscore")
+
 (defn/a async-func [a])
 
 (defn adecorator [f]
@@ -79,7 +84,7 @@ some additional text"
   ;; (setv Vector (of list float))
   ;; "New Attribute Type"
 
-  (defn --init-- [self x y]
+  (defn __init__ [self x y]
     ;; TODO
     (setv self.x x)
     "location on the x axis"
@@ -111,11 +116,10 @@ some additional text"
       (defn method_to_implement [self input]))
 
   #@(final
-      (defn final-method [self]))
-  )
+      (defn final-method [self])))
 
 ;; TODO
 
 #@(final
     (defclass MyError [Exception]
-      (defn --init-- [self a b c])))
+      (defn __init__ [self a b c])))
