@@ -553,13 +553,14 @@ class HyFunction(HyObject):
 
 
 class HyMacro(HyFunction):
-    pass
+    def get_signature_prefix(self, sig: str) -> str:
+        return self.objtype
 
 
 class HyTag(HyFunction):
     def add_target_and_index(self, name_cls: Tuple[str, str], sig: str, signode):
         modname = self.options.get("module", self.env.ref_context.get("hy:module"))
-        fullname = (modname + "." if modname else "") + "#" + name_cls[0]
+        fullname = (modname + "." if modname else "") + name_cls[0]
         # node_id = make_id(self.env, self.state.document, "", fullname)
         node_id = fullname
         signode["ids"].append(node_id)
@@ -626,7 +627,7 @@ class HyTag(HyFunction):
         if sig_prefix:
             signode += addnodes.desc_annotation(sig_prefix, sig_prefix)
 
-        signode += addnodes.desc_addname("#", "#")
+        # signode += addnodes.desc_addname("#", "#")
 
         if add_module and self.env.config.add_module_names:
             if modname and modname != "exceptions":
