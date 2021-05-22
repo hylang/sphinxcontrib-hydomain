@@ -112,9 +112,7 @@ def _parse_arglist(arglist: str, env: BuildEnvironment = None):
             None,
         ):
             # PEP-3102: Separator for Keyword Only Parameter: *
-            params += desc_hyparameter(
-                "", "", addnodes.desc_sig_operator("", "*")
-            )
+            params += desc_hyparameter("", "", addnodes.desc_sig_operator("", "*"))
 
         node = desc_hyparameter()
         # if param.default is not param.empty and first_default:
@@ -558,6 +556,9 @@ class HyMacro(HyFunction):
 
 
 class HyTag(HyFunction):
+    def get_signature_prefix(self, sig: str) -> str:
+        return self.objtype + " macro"
+
     def add_target_and_index(self, name_cls: Tuple[str, str], sig: str, signode):
         modname = self.options.get("module", self.env.ref_context.get("hy:module"))
         fullname = (modname + "." if modname else "") + name_cls[0]
