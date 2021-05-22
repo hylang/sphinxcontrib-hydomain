@@ -638,9 +638,6 @@ class HyTag(HyFunction):
                 signode += addnodes.desc_addname(nodetext, nodetext)
         signode += addnodes.desc_name(name, name)
 
-        if should_wrap:
-            signode += addnodes.desc_addname("(", "(")
-
         if prefix:
             signode += addnodes.desc_addname(prefix, prefix)
 
@@ -652,6 +649,8 @@ class HyTag(HyFunction):
 
         if arglist:
             try:
+                if arglist.startswith("&name"):
+                    arglist = arglist[len("&name") :]
                 signode += _parse_arglist(arglist, self.env)
             except NotImplementedError as exc:
                 logging.warning("could not parse arglist (%r): %s", exc)
@@ -665,8 +664,6 @@ class HyTag(HyFunction):
         if anno:
             signode += addnodes.desc_annotation(" " + anno, " " + anno)
 
-        if should_wrap:
-            signode += addnodes.desc_addname(")", ")")
         return fullname, prefix
 
 

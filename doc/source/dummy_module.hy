@@ -3,6 +3,7 @@
 some additional text"
 (import [typing [Optional Tuple Dict final List]]
         [functools [wraps]]
+        subprocess
         abc
         sys)
 
@@ -17,11 +18,11 @@ some additional text"
 
 (defmacro ! [#* body]
   "Macro version of shortened await"
-  `(await (~@body)))
+  `(subprocess.run ~@body))
 
-(defmacro "#!" [#* body]
+(defmacro "#!" [cmd]
   "Tag macro for await expression"
-  `(await (~@body)))
+  `(. (subprocess.run ~(str cmd) :shell True :capture-output True :encoding "utf-8") stdout))
 
 (defmacro/g! gensymmacro [#* body]
   "hello world!"
