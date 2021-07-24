@@ -594,13 +594,11 @@ class HyTag(HyFunction):
                 )
 
     def handle_signature(self, sig: str, signode) -> Tuple[str, str]:
-        isvar = False
         msexp = hy_sexp_sig_re.match(sig)
         mvar = hy_var_re.match(sig)
         if msexp is not None:
             prefix, name, retann, arglist = msexp.groups()
         elif mvar is not None:
-            isvar = True
             prefix, name = mvar.groups()
             retann, arglist = None, None
         else:
@@ -609,9 +607,6 @@ class HyTag(HyFunction):
         # determine module and class name (if applicable), as well as full name
         modname = self.options.get("module", self.env.ref_context.get("hy:module"))
         classname = self.env.ref_context.get("hy:class")
-        should_wrap = (
-            not isvar or self.objtype in {"function", "method"}
-        ) and "property" not in self.options
 
         if classname:
             add_module = False

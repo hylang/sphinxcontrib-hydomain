@@ -1,10 +1,10 @@
 """Dummy Python Module
 
 some additional text"""
-from typing import Optional, final
+import abc
 import typing as t
 from functools import wraps
-import abc
+from typing import Optional, final
 
 GLOBAL_VAR: str = "Hello World"
 """something important about GLOBAL_VAR"""
@@ -17,6 +17,7 @@ def bar(a: Optional[int], b: t.Optional[int]) -> int:
     """WHAT"""
     return (a or 42) + (b or 0)
 
+
 def adecorator(fn):
     @wraps(fn)
     def wrapped(*args, **kwargs):
@@ -25,14 +26,20 @@ def adecorator(fn):
 
     return wrapped
 
+
 var_callable = bar
+
 
 async def async_func(a):
     pass
 
+
 _sentinel = object()
-def obj_param_test(something = _sentinel):
+
+
+def obj_param_test(something=_sentinel):
     pass
+
 
 class Point:
     "A two dimensional coordinate on the x y plane"
@@ -45,7 +52,6 @@ class Point:
         self.x = x
         #: location on the y axis
         self.y = y
-
 
     def distance(self, other: "Point") -> float:
         """Calculates distance between self and another point"""
@@ -76,6 +82,7 @@ class Point:
     @final
     def final_method(self):
         pass
+
 
 @final
 class MyError(Exception):
