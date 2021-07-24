@@ -44,15 +44,17 @@ from sphinx.util.typing import is_system_TypeVar, _stringify_py36
 logger = logging.getLogger("hy-domain")
 
 hy_ext_sig_re = re.compile(
-    r"""^\(
-           (?P<module>[\w.]+::)?                       # Explicit module name
-           (?P<classes>.*\.)?                         # Module and/or class name(s)
-           (?P<object>.+?) \s*                        # Thing name
-           (?:\s*\^(?P<retann>.*?)\s*)?               # Optional: return annotation
-           (?:                                        # Arguments/close or just close
-            (?:\[(?:\s*(?P<arguments>.*)\s*\]\))?) | # Optional: arguments
-            (?:\)))
-        $""",
+    r"""
+^\(
+    (?:\s*\^(?P<retann>\(.*?\) | .*?)\s+)?     # Optional: return annotation
+    (?P<module>[\w.]+::)?                       # Explicit module name
+    (?P<classes>.*\.)?                         # Module and/or class name(s)
+    (?P<object>.+?) \s*                        # Thing name
+    (?:                                        # Arguments/close or just close
+      (?:\[(?:\s*(?P<arguments>.*)\s*\]\))?) | # Optional: arguments
+      (?:\)))
+$
+""",
     re.VERBOSE,
 )
 
@@ -324,7 +326,7 @@ def signature(obj, bound_method=False, macro=False):
     defaults = list(zip(defaults, argspec.defaults or []))
 
     if bound_method or macro:
-        if len(args) > 0 and args[0][0] in map(hy.mangle, ("self", "&name")):
+        if len(args) > 0 and args[0][0] in map(hy.mangle, ("self", "&compiler")):
             args.pop(0)
     kwonlydefaults = argspec.kwonlydefaults.items() if argspec.kwonlydefaults else []
     kwonly = [
@@ -377,9 +379,8 @@ def signature(obj, bound_method=False, macro=False):
     )
 
     retann = argspec.annotations.get("return")
-    retann = stringify(retann) + " " if retann is not None else ""
-
-    return f"^{retann} [{arg_string}]" if retann else f"[{arg_string}]"
+    retann = stringify(retann) if retann else ""
+    return f"^{retann}" if retann else None, f"[{arg_string}]"
 
 
 def get_module_members(module: Any):
@@ -402,7 +403,7 @@ def get_module_members(module: Any):
     for name, value in macros.items():
         try:
             if hy.unmangle(name).startswith("#"):
-                setattr(value, "__tag__", True)
+                setattr(value, "__macro__", True)
             else:
                 setattr(value, "__macro__", True)
             name = hy.unmangle(name)
@@ -557,7 +558,7 @@ class HyDocumenter(PyDocumenter):
         args = ""
         retann = ""
         try:
-            args = signature(
+            retann, args = signature(
                 self.object,
                 bound_method=isinstance(self, (HyMethodDocumenter, HyClassDocumenter)),
                 macro=isinstance(self, HyMacroDocumenter),
@@ -570,8 +571,9 @@ class HyDocumenter(PyDocumenter):
             )
             args = None
 
+        self.retann = retann
         if args is not None:
-            return ((" ^%s" % retann) if retann else " ") + args
+            return f" {args}"
         else:
             return ""
 
@@ -589,7 +591,11 @@ class HyDocumenter(PyDocumenter):
         prefix = ".. %s:%s:: " % (domain, directive)
         for i, sig_line in enumerate(sig.split("\n")):
             if sig:
-                self.add_line("%s(%s%s)" % (prefix, name, sig_line), sourcename)
+                retann = getattr(self, "retann", None)
+                self.add_line(
+                    f"{prefix}({retann + ' ' if retann else ''}{name}{sig_line})",
+                    sourcename,
+                )
             else:
                 self.add_line("%s%s%s" % (prefix, name, sig_line), sourcename)
 
@@ -711,7 +717,7 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                     )
 
                     is_wanted_tag = (
-                        getattr(value, "__tag__", False) and self.options.tags
+                        getattr(value, "__macro__", False) and self.options.tags
                     )
 
                     if (
@@ -806,9 +812,11 @@ class HyTagDocumenter(HyFunctionDocumenter):
 
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):
-        return super().can_document_member(
-            member, membername, isattr, parent
-        ) and getattr(member, "__tag__", False)
+        return (
+            super().can_document_member(member, membername, isattr, parent)
+            and getattr(member, "__macros__", False)
+            and hy.unmangle(membername).startswith("#")
+        )
 
     def import_object(self, raiseerror: bool = False) -> bool:
         """Import the object given by *self.modname* and *self.objpath* and set
