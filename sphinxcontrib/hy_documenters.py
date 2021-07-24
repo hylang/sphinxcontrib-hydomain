@@ -4,20 +4,23 @@ import sys
 import traceback
 from inspect import getfullargspec
 from itertools import islice, starmap
-from typing import Any, Callable, List, TypeVar, Dict
+from typing import Any, Callable, Dict, List, TypeVar
 
 import hy
+import hy.core.macros
+import hy.extra.reserved as reserved
 from docutils.nodes import Node
-from sphinx.ext.autodoc import ALL, bool_option
+from sphinx.ext.autodoc import ALL
+from sphinx.ext.autodoc import AttributeDocumenter as PyAttributeDocumenter
+from sphinx.ext.autodoc import ClassDocumenter as PyClassDocumenter
+from sphinx.ext.autodoc import DecoratorDocumenter as PyDecoratorDocumenter
 from sphinx.ext.autodoc import Documenter as PyDocumenter
 from sphinx.ext.autodoc import FunctionDocumenter as PyFunctionDocumenter
 from sphinx.ext.autodoc import MethodDocumenter as PyMethodDocumenter
-from sphinx.ext.autodoc import ClassDocumenter as PyClassDocumenter
 from sphinx.ext.autodoc import ModuleDocumenter as PyModuleDocumenter
-from sphinx.ext.autodoc import PropertyDocumenter as PyPropertyDocumenter
-from sphinx.ext.autodoc import AttributeDocumenter as PyAttributeDocumenter
-from sphinx.ext.autodoc import DecoratorDocumenter as PyDecoratorDocumenter
 from sphinx.ext.autodoc import ObjectMember
+from sphinx.ext.autodoc import PropertyDocumenter as PyPropertyDocumenter
+from sphinx.ext.autodoc import bool_option
 from sphinx.ext.autodoc.directive import (
     AutodocDirective,
     DocumenterBridge,
@@ -25,8 +28,6 @@ from sphinx.ext.autodoc.directive import (
     parse_generated_content,
     process_documenter_options,
 )
-import hy.extra.reserved as reserved
-import hy.core.macros
 from sphinx.ext.autodoc.importer import Attribute, import_module
 from sphinx.ext.autodoc.mock import mock
 from sphinx.locale import __
@@ -39,7 +40,7 @@ from sphinx.util.inspect import (
     isenumclass,
     safe_getattr,
 )
-from sphinx.util.typing import is_system_TypeVar, _stringify_py36
+from sphinx.util.typing import _stringify_py36, is_system_TypeVar
 
 logger = logging.getLogger("hy-domain")
 
