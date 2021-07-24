@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 requires = [
     "Sphinx >= 3.3",
-    "hy >= 0.20",
+    "hy >= 1.0a3",
 ]
 
 
@@ -22,7 +22,7 @@ setup(
     license="BSD",
     author="Allison Casey",
     author_email="alliecasey21@gmail.com",
-    description="Sphinx domain for documenting HTTP APIs",
+    description="Sphinx domain for documenting Hy code bases",
     long_description=readme(),
     zip_safe=False,
     classifiers=[
@@ -33,7 +33,11 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Topic :: Documentation",
         "Topic :: Utilities",
     ],

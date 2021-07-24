@@ -9,7 +9,7 @@ from typing import Optional, final
 GLOBAL_VAR: str = "Hello World"
 """something important about GLOBAL_VAR"""
 
-Vector = list[float]
+Vector = t.List[float]
 """I'm a type jim"""
 
 
@@ -44,7 +44,7 @@ def obj_param_test(something=_sentinel):
 class Point:
     "A two dimensional coordinate on the x y plane"
 
-    Vector = list[float]
+    Vector = t.List[float]
     """Attribute new type"""
 
     def __init__(self, x, y):

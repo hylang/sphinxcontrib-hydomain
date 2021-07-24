@@ -20,7 +20,6 @@ import sys
 from inspect import Parameter
 from typing import Any, Dict, Iterator, List, Tuple, cast
 
-import astor
 import hy
 from docutils import nodes
 from docutils.nodes import Element, Node
@@ -93,8 +92,8 @@ def bool_option(arg):
 
 def hy2py(source: str) -> str:
     hst = hy.lex.hy_parse(source)
-    ast = hy.compiler.hy_compile(hst, "__main__").body[1]
-    return astor.code_gen.to_source(ast)
+    pyast = hy.compiler.hy_compile(hst, "__main__").body[1]
+    return ast.unparse(pyast)
 
 
 def signature_from_str(signature: str) -> inspect.Signature:
