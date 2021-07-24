@@ -14,7 +14,7 @@ some additional text"
 
 (defmacro optionalmacro [a [b None]])
 
-(defn optionalfunc ^(of List int) [a [b None]])
+(defn ^(of List int) optionalfunc [a [b None]])
 
 (defmacro ! [#* body]
   "Macro version of shortened await"
@@ -57,7 +57,7 @@ some additional text"
 
 (defn optional-bug [[g "G"]])
 
-(defn a-func? ^int [^int a
+(defn ^int a-func? [^int a
                  ^float [c 42.0]
                  ^str #* a!rgs
                  ^dict d
@@ -92,12 +92,12 @@ some additional text"
     (setv self.y y)
     "location on the y axis")
 
-  (defn distance ^float [self ^"Point" other]
+  (defn ^float distance [self ^"Point" other]
     "Calculates distance between self and another point"
     1)
 
   #@(classmethod
-      (defn duplicate ^"Point" [cls]
+      (defn ^"Point" duplicate [cls]
         "Create a copy of this point"
         (Point 1 1)))
 
