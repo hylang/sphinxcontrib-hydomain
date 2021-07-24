@@ -51,7 +51,18 @@ import sphinxcontrib.hy_documenters as doc
 logging.getLogger().setLevel(logging.DEBUG)
 
 hy_sexp_sig_re = re.compile(
-    r"^\(([\w.]*\.)?(.+?)\s*(?:\s*\^(.*?)\s*)?(?:(?:\[(?:\s*(.*)\s*\]\))?)|(?:\)))$"
+    r"""
+^\(
+    (?:\s*\^(?P<retann>\(.*?\) | .*?)\s+)?     # Optional: return annotation
+    (?P<module>[\w.]+::)?                       # Explicit module name
+    (?P<classes>.*\.)?                         # Module and/or class name(s)
+    (?P<object>.+?) \s*                        # Thing name
+    (?:                                        # Arguments/close or just close
+      (?:\[(?:\s*(?P<arguments>.*)\s*\]\))?) | # Optional: arguments
+      (?:\)))
+$
+""",
+    re.VERBOSE,
 )
 hy_var_re = re.compile(r"^([\w.]*\.)?(.+?)$")
 
@@ -82,7 +93,7 @@ def bool_option(arg):
 
 def hy2py(source: str) -> str:
     hst = hy.lex.hy_parse(source)
-    ast = hy.compiler.hy_compile(hst, "__main__", import_stdlib=False)
+    ast = hy.compiler.hy_compile(hst, "__main__").body[1]
     return astor.code_gen.to_source(ast)
 
 
@@ -90,8 +101,8 @@ def signature_from_str(signature: str) -> inspect.Signature:
     # NOTE Likely where the crash on -sentinel bug is happening
     code = "(defn func" + signature + ")"
     hst = hy.lex.hy_parse(code)
-    module = hy.compiler.hy_compile(hst, "__main__", import_stdlib=False)
-    function = cast(ast.FunctionDef, module.body[0])
+    module = hy.compiler.hy_compile(hst, "__main__")
+    function = cast(ast.FunctionDef, module.body[1])
 
     return signature_from_ast(function)
 
@@ -355,7 +366,11 @@ class HyObject(PyObject):
         msexp = hy_sexp_sig_re.match(sig)
         mvar = hy_var_re.match(sig)
         if msexp is not None:
-            prefix, name, retann, arglist = msexp.groups()
+            retann, *prefix, name, arglist = msexp.groups()
+            if prefix:
+                prefix = ".".join(filter(None, prefix))
+            else:
+                prefix = None
         elif mvar is not None:
             isvar = True
             prefix, name = mvar.groups()
