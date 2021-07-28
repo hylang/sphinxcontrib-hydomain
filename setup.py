@@ -11,7 +11,7 @@ requires = [
 def readme():
     try:
         return Path("README.rst").read_text()
-    except IOError:
+    except OSError:
         return None
 
 
