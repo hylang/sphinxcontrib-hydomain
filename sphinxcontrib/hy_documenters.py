@@ -203,13 +203,13 @@ def import_object(
             exc = exc_on_importing
 
         if objpath:
-            errmsg = "autodoc: failed to import %s %r from module %r" % (
+            errmsg = "autodoc: failed to import {} {!r} from module {!r}".format(
                 objtype,
                 ".".join(objpath),
                 modname,
             )
         else:
-            errmsg = "autodoc: failed to import %s %r" % (objtype, modname)
+            errmsg = f"autodoc: failed to import {objtype} {modname!r}"
 
         if isinstance(exc, ImportError):
             # import_module() raises ImportError having real exception obj and
@@ -278,7 +278,7 @@ def _stringify_py37(annotation: Any) -> str:
         else:
             qualname = stringify(annotation.__origin__)  # ex. Union
     elif hasattr(annotation, "__qualname__"):
-        qualname = "%s.%s" % (module, annotation.__qualname__)
+        qualname = f"{module}.{annotation.__qualname__}"
     elif hasattr(annotation, "__origin__"):
         # instantiated generic provided by a user
         qualname = stringify(annotation.__origin__)
@@ -304,7 +304,7 @@ def _stringify_py37(annotation: Any) -> str:
         elif qualname == "Callable":
             args = ", ".join(stringify(a) for a in annotation.__args__[:-1])
             returns = stringify(annotation.__args__[-1])
-            return "(of %s [%s] %s)" % (qualname, args, returns)
+            return f"(of {qualname} [{args}] {returns})"
         elif str(annotation).startswith("typing.Annotated"):  # for py39+
             return stringify(annotation.__args__[0])
         elif all(is_system_TypeVar(a) for a in annotation.__args__):
@@ -312,7 +312,7 @@ def _stringify_py37(annotation: Any) -> str:
             return qualname
         else:
             args = " ".join(stringify(a) for a in annotation.__args__)
-            return "(of %s %s)" % (qualname, args)
+            return f"(of {qualname} {args})"
 
     return qualname
 
@@ -589,7 +589,7 @@ class HyDocumenter(PyDocumenter):
         sourcename = self.get_sourcename()
 
         # one signature per line, indented by column
-        prefix = ".. %s:%s:: " % (domain, directive)
+        prefix = f".. {domain}:{directive}:: "
         for i, sig_line in enumerate(sig.split("\n")):
             if sig:
                 retann = getattr(self, "retann", None)
@@ -598,7 +598,7 @@ class HyDocumenter(PyDocumenter):
                     sourcename,
                 )
             else:
-                self.add_line("%s%s%s" % (prefix, name, sig_line), sourcename)
+                self.add_line(f"{prefix}{name}{sig_line}", sourcename)
 
             if i == 0:
                 prefix = " " * len(prefix)

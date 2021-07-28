@@ -248,7 +248,7 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
 
     def unparse(node: ast.AST, isslice=False) -> List[Node]:
         if isinstance(node, ast.Attribute):
-            return [nodes.Text("%s.%s" % (unparse(node.value)[0], node.attr))]
+            return [nodes.Text(f"{unparse(node.value)[0]}.{node.attr}")]
         elif isinstance(node, ast.Expr):
             return unparse(node.value)
         elif isinstance(node, ast.Index):
@@ -560,7 +560,7 @@ class HyFunction(HyObject):
                 text = _("%s() (in module %s)") % (name, modname)
                 self.indexnode["entries"].append(("single", text, node_id, "", None))
             else:
-                text = "%s; %s()" % (pairindextypes["builtin"], name)
+                text = "{}; {}()".format(pairindextypes["builtin"], name)
                 self.indexnode["entries"].append(("pair", text, node_id, "", None))
 
 
@@ -742,7 +742,7 @@ class HyModule(PyModule):
             # the platform and synopsis aren't printed; in fact, they are only
             # used in the modindex currently
             ret.append(target)
-            indextext = "%s; %s" % (pairindextypes["module"], modname)
+            indextext = "{}; {}".format(pairindextypes["module"], modname)
             inode = addnodes.index(entries=[("pair", indextext, node_id, "", None)])
             ret.append(inode)
         return ret
