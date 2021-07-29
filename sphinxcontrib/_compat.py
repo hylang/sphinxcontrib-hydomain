@@ -8,4 +8,4 @@ if not PY3_9:
 
     import astor.code_gen
 
-    ast.unparse = astor.code_gun.to_source
+    ast.unparse = astor.code_gen.to_source
