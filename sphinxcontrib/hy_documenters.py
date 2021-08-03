@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, List, TypeVar
 
 import hy
 import hy.core.macros
-import hy.extra.reserved as reserved
+import hy.reserved as reserved
 from docutils.nodes import Node
 from sphinx.ext.autodoc import ALL
 from sphinx.ext.autodoc import AttributeDocumenter as PyAttributeDocumenter
