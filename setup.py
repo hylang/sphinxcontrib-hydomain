@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 requires = [
     "Sphinx >= 3.3",
-    "hy >= 1.0a3",
+    "hy @ git+https://github.com/hylang/hy@master#egg=hy-1.0",
 ]
 
 
