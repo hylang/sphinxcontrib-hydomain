@@ -1017,7 +1017,14 @@ class HyDomain(Domain):
     def objects(self):
         return self.data.setdefault("objects", {})
 
-    def note_object(self, name: str, objtype: str, node_id: str, location=None) -> None:
+    def note_object(
+        self,
+        name: str,
+        objtype: str,
+        node_id: str,
+        location=None,
+        aliased: bool = False,
+    ) -> None:
         if name in self.objects:
             other = self.objects[name]
             logging.warning(
@@ -1028,7 +1035,7 @@ class HyDomain(Domain):
                 name,
                 other.docname,
             )
-        self.objects[name] = ObjectEntry(self.env.docname, node_id, objtype)
+        self.objects[name] = ObjectEntry(self.env.docname, node_id, objtype, aliased)
 
     @property
     def modules(self) -> Dict[str, ModuleEntry]:
