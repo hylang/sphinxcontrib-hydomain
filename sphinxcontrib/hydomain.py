@@ -269,11 +269,12 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
             result = unparse(node.value)
             result = [
                 addnodes.desc_sig_punctuation("", "("),
-                nodes.Text("of "),
+                nodes.Text("get "),
                 *result,
                 nodes.Text(" "),
             ]
             result.extend(unparse(node.slice, isslice=True))
+            addnodes.desc_sig_punctuation("", ")"),
             result.append(addnodes.desc_sig_punctuation("", ")"))
             return result
         elif isinstance(node, ast.Tuple):
@@ -281,9 +282,14 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
                 result = []
                 if not isslice:
                     result.append(addnodes.desc_sig_punctuation("", "(, "))
+                if len(node.elts) > 1:
+                    result.append(addnodes.desc_sig_punctuation("", "("))
+                    result.append(nodes.Text(", "))
                 for elem in node.elts:
                     result.extend(unparse(elem))
                     result.append(addnodes.desc_sig_punctuation("", " "))
+                if len(node.elts) > 1:
+                    result.append(addnodes.desc_sig_punctuation("", ")"))
                 result.pop()
                 if not isslice:
                     result.append(addnodes.desc_sig_punctuation("", ")"))
@@ -1017,7 +1023,14 @@ class HyDomain(Domain):
     def objects(self):
         return self.data.setdefault("objects", {})
 
-    def note_object(self, name: str, objtype: str, node_id: str, location=None) -> None:
+    def note_object(
+        self,
+        name: str,
+        objtype: str,
+        node_id: str,
+        location=None,
+        aliased: bool = False,
+    ) -> None:
         if name in self.objects:
             other = self.objects[name]
             logging.warning(
@@ -1028,7 +1041,7 @@ class HyDomain(Domain):
                 name,
                 other.docname,
             )
-        self.objects[name] = ObjectEntry(self.env.docname, node_id, objtype)
+        self.objects[name] = ObjectEntry(self.env.docname, node_id, objtype, aliased)
 
     @property
     def modules(self) -> Dict[str, ModuleEntry]:
