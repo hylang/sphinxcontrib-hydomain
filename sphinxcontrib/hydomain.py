@@ -269,11 +269,12 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
             result = unparse(node.value)
             result = [
                 addnodes.desc_sig_punctuation("", "("),
-                nodes.Text("of "),
+                nodes.Text("get "),
                 *result,
                 nodes.Text(" "),
             ]
             result.extend(unparse(node.slice, isslice=True))
+            addnodes.desc_sig_punctuation("", ")"),
             result.append(addnodes.desc_sig_punctuation("", ")"))
             return result
         elif isinstance(node, ast.Tuple):
@@ -281,9 +282,14 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
                 result = []
                 if not isslice:
                     result.append(addnodes.desc_sig_punctuation("", "(, "))
+                if len(node.elts) > 1:
+                    result.append(addnodes.desc_sig_punctuation("", "("))
+                    result.append(nodes.Text(", "))
                 for elem in node.elts:
                     result.extend(unparse(elem))
                     result.append(addnodes.desc_sig_punctuation("", " "))
+                if len(node.elts) > 1:
+                    result.append(addnodes.desc_sig_punctuation("", ")"))
                 result.pop()
                 if not isslice:
                     result.append(addnodes.desc_sig_punctuation("", ")"))

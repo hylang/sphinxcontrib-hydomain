@@ -41,7 +41,7 @@ Hy Domain Directives
 
 .. hy:macro:: (something [a [b None]])
 
-.. hy:function:: (^(of List int) something-else [a [b None]])
+.. hy:function:: (^(get List int) something-else [a [b None]])
 
 .. hy:class:: (Point [x y])
 
@@ -91,12 +91,12 @@ Hy Domain Directives
    :param x: param x
    :type  x: int
    :param y: param y
-   :type  y: (of tuple str float)
+   :type  y: (get tuple (, str float))
    :returns: some numbers
    :rtype:   list
 
 
-.. hy:function:: (^list bar [^int x ^(of tuple str float) y])
+.. hy:function:: (^list bar [^int x ^(get tuple (, str float)) y])
 
    :param x: param x
    :param y: param y

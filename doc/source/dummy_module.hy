@@ -1,8 +1,8 @@
-"Dummy Python Module
+"Dummy Hy Module
 
 some additional text"
-(import [typing [Optional Tuple Dict final List]]
-        [functools [wraps]]
+(import typing [Optional Tuple Dict final List]
+        functools [wraps]
         subprocess
         abc
         sys)
@@ -10,11 +10,11 @@ some additional text"
 ;; TODO Module documenter doesn't pull macros
 (defmacro defall [#* symbols]
   "Defines `__all__` using unmangled hy names"
-  `(setv __all__ ~(lfor sym symbols (mangle sym))))
+  `(setv __all__ ~(lfor sym symbols (hy.mangle sym))))
 
 (defmacro optionalmacro [a [b None]])
 
-(defn ^(of List int) optionalfunc [a [b None]])
+(defn ^(get List int) optionalfunc [a [b None]])
 
 (defmacro ! [#* body]
   "Macro version of shortened await"
@@ -24,7 +24,7 @@ some additional text"
   "Tag macro for await expression"
   `(. (subprocess.run ~(str cmd) :shell True :capture-output True :encoding "utf-8") stdout))
 
-(defmacro/g! gensymmacro [#* body]
+(defmacro gensymmacro [#* body]
   "hello world!"
   None)
 
@@ -47,7 +47,7 @@ some additional text"
 "Something important about GLOBAL-VAR"
 
 ;; TODO Crashes compiler
-;; (setv Vector (of list float))
+;; (setv Vector (get list float))
 ;; "New Data Type"
 
 ;; TODO arbitrary object default parameters
@@ -61,7 +61,7 @@ some additional text"
                  ^float [c 42.0]
                  ^str #* a!rgs
                  ^dict d
-                 ^(of Dict str int) #** kwargs]
+                 ^(get Dict (, str int)) #** kwargs]
   "Hello World!"
   (+ a b))
 
@@ -82,7 +82,7 @@ some additional text"
   "A two dimensional coordinate on the x/y plane"
 
   ;; TODO Crashes compiler
-  ;; (setv Vector (of list float))
+  ;; (setv Vector (get list float))
   ;; "New Attribute Type"
 
   (defn __init__ [self x y]

@@ -294,17 +294,17 @@ def _stringify_py37(annotation: Any) -> str:
         elif qualname == "Union":
             if len(annotation.__args__) > 1 and annotation.__args__[-1] is NoneType:
                 if len(annotation.__args__) > 2:
-                    args = ", ".join(stringify(a) for a in annotation.__args__[:-1])
-                    return "(of Optional (of Union %s))" % args
+                    args = " ".join(stringify(a) for a in annotation.__args__[:-1])
+                    return f"(get Optional (get Union (, {args})))"
                 else:
-                    return "(of Optional %s)" % stringify(annotation.__args__[0])
+                    return "(get Optional %s)" % stringify(annotation.__args__[0])
             else:
-                args = ", ".join(stringify(a) for a in annotation.__args__)
-                return "(of Union %s)" % args
+                args = " ".join(stringify(a) for a in annotation.__args__)
+                return "(get Union (, %s))" % args
         elif qualname == "Callable":
             args = ", ".join(stringify(a) for a in annotation.__args__[:-1])
             returns = stringify(annotation.__args__[-1])
-            return f"(of {qualname} [{args}] {returns})"
+            return f"(get {qualname} (, [{args}] {returns}))"
         elif str(annotation).startswith("typing.Annotated"):  # for py39+
             return stringify(annotation.__args__[0])
         elif all(is_system_TypeVar(a) for a in annotation.__args__):
@@ -312,7 +312,7 @@ def _stringify_py37(annotation: Any) -> str:
             return qualname
         else:
             args = " ".join(stringify(a) for a in annotation.__args__)
-            return f"(of {qualname} {args})"
+            return f"(get {qualname} (, {args}))"
 
     return qualname
 
