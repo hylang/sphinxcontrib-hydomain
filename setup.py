@@ -25,6 +25,7 @@ setup(
     description="Sphinx domain for documenting Hy code bases",
     long_description=readme(),
     zip_safe=False,
+    python_requires=">= 3.7, < 3.11",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
@@ -33,7 +34,6 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
