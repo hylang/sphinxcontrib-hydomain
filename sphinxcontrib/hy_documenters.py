@@ -20,7 +20,7 @@ from sphinx.ext.autodoc import MethodDocumenter as PyMethodDocumenter
 from sphinx.ext.autodoc import ModuleDocumenter as PyModuleDocumenter
 from sphinx.ext.autodoc import ObjectMember
 from sphinx.ext.autodoc import PropertyDocumenter as PyPropertyDocumenter
-from sphinx.ext.autodoc import bool_option
+from sphinx.ext.autodoc import bool_option, members_option
 from sphinx.ext.autodoc.directive import (
     AutodocDirective,
     DocumenterBridge,
@@ -666,7 +666,7 @@ class HyDocumenter(PyDocumenter):
 
 class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
     option_spec = PyModuleDocumenter.option_spec.copy()
-    option_spec.update({"macros": bool_option, "tags": bool_option})
+    option_spec.update({"macros": members_option, "tags": bool_option})
 
     def add_directive_header(self, sig: str) -> None:
         return super().add_directive_header(sig)
@@ -722,9 +722,13 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                     )
 
                     if (
-                        hy.mangle(name) in self.__all__
-                        or is_wanted_macro
-                        or is_wanted_tag
+                        hy.mangle(name) in self.options.macros
+                        if self.options.macros
+                        else (
+                            hy.mangle(name) in self.__all__
+                            or is_wanted_macro
+                            or is_wanted_tag
+                        )
                     ):
                         ret.append(ObjectMember(name, value))
                     else:
