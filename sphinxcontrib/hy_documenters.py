@@ -403,10 +403,7 @@ def get_module_members(module: Any):
 
     for name, value in macros.items():
         try:
-            if hy.unmangle(name).startswith("#"):
-                setattr(value, "__macro__", True)
-            else:
-                setattr(value, "__macro__", True)
+            setattr(value, "__macro__", True)
             name = hy.unmangle(name)
             if name not in reserved_hy_names or is_core_module:
                 members[name] = (name, value)
@@ -621,7 +618,9 @@ class HyDocumenter(PyDocumenter):
             self.env.temp_data["autodoc:class"] = self.objpath[0]
 
         want_all = (
-            all_members or self.options.inherited_members or self.options.members is ALL
+            all_members
+            or self.options.inherited_members
+            or (self.options.members is ALL and self.options.macros is ALL)
         )
         # find out which members are documentable
         members_check_module, members = self.get_object_members(want_all)
@@ -713,22 +712,10 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
             else:
                 ret = []
                 for name, value in members:
-                    is_wanted_macro = (
-                        getattr(value, "__macro__", False) and self.options.macros
-                    )
+                    is_macro = getattr(value, "__macro__", False)
 
-                    is_wanted_tag = (
-                        getattr(value, "__macro__", False) and self.options.tags
-                    )
-
-                    if (
-                        hy.mangle(name) in self.options.macros
-                        if self.options.macros
-                        else (
-                            hy.mangle(name) in self.__all__
-                            or is_wanted_macro
-                            or is_wanted_tag
-                        )
+                    if (hy.mangle(name) in self.__all__) or (
+                        is_macro and self.options.macros
                     ):
                         ret.append(ObjectMember(name, value))
                     else:
@@ -736,12 +723,22 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
 
                 return False, ret
         else:
-            memberlist = self.options.members or []
-            ret = []
+            memberlist = (
+                dir(self.object)
+                if self.options.members is ALL
+                else (self.options.members or [])
+            )
+            memberlist = [
+                member
+                for member in map(hy.unmangle, memberlist)
+                if not member.startswith("_hy-anon-var")
+            ]
+            logger.debug(memberlist)
+            member_ret = []
             for name in memberlist:
                 try:
                     value = safe_getattr(self.object, hy.mangle(name))
-                    ret.append(ObjectMember(name, value))
+                    member_ret.append(ObjectMember(name, value))
                 except AttributeError:
                     logger.warning(
                         __(
@@ -751,7 +748,29 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                         % (safe_getattr(self.object, "__name__", "???"), name),
                         # type="autodoc",
                     )
-            return False, ret
+            macromembers = (
+                safe_getattr(self.object, "__macros__", {}).keys()
+                if self.options.macros is ALL
+                else (self.options.macros or [])
+            )
+            macro_ret = []
+            macros = safe_getattr(self.object, "__macros__", {})
+            for name in macromembers:
+                macro_obj = macros.get(hy.mangle(name))
+                if macro_obj:
+                    setattr(macro_obj, "__macro__", True)
+                    macro_ret.append(ObjectMember(name, macro_obj))
+                else:
+                    logger.warning(
+                        __(
+                            "missing macro mentioned in :macros: option: "
+                            "module %s, attribute %s"
+                        )
+                        % (safe_getattr(self.object, "__name__", "???"), name),
+                        # type="autodoc",
+                    )
+
+            return False, member_ret + macro_ret
 
 
 class HyFunctionDocumenter(HyDocumenter, PyFunctionDocumenter):
