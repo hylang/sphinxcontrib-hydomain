@@ -91,7 +91,7 @@ def bool_option(arg):
 
 
 def hy2py(source: str) -> str:
-    hst = hy.lex.hy_parse(source)
+    hst = hy.lex.read(source)
     pyast = hy.compiler.hy_compile(hst, "__main__").body[1]
     return ast.unparse(pyast)
 
@@ -99,7 +99,7 @@ def hy2py(source: str) -> str:
 def signature_from_str(signature: str) -> inspect.Signature:
     # NOTE Likely where the crash on -sentinel bug is happening
     code = "(defn func" + signature + ")"
-    hst = hy.lex.hy_parse(code)
+    hst = hy.lex.read(code)
     module = hy.compiler.hy_compile(hst, "__main__")
     function = cast(ast.FunctionDef, module.body[1])
 
