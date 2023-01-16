@@ -20,7 +20,7 @@ setup(
     version="0.1.0",
     url="https://github.com/hylang/sphinxcontrib-hydomain",
     license="BSD",
-    author="Allison Casey",
+    author="Allison Casey and Kodi B. Arfer",
     author_email="alliecasey21@gmail.com",
     description="Sphinx domain for documenting Hy code bases",
     long_description=readme(),
