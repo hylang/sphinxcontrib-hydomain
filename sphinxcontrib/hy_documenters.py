@@ -182,8 +182,10 @@ def import_object(
         object_name = None
         if macro or tag:
             attrname = objpath[0]
-            mangled_name = hy.mangle(attrname)
-            obj = getattr(obj, "__dict__", {}).get("__macros__", {})[mangled_name]
+            mangled_name = hy.mangle(("#" if tag else "") + attrname)
+            obj = getattr(obj, "__dict__", {}).get(
+                "__reader_macros__" if tag else "__macros__", {}
+            )[mangled_name]
             logger.debug("[autodoc] => %r", obj)
             object_name = attrname
             return [module, parent, object_name, obj]
@@ -326,9 +328,10 @@ def signature(obj, bound_method=False, macro=False):
     defaults = list(islice(argspec.args, len(args or []), None))
     defaults = list(zip(defaults, argspec.defaults or []))
 
-    if bound_method or macro:
-        if len(args) > 0 and args[0][0] in map(hy.mangle, ("self", "&compiler")):
-            args.pop(0)
+    if bound_method and args and args[0][0] == "self":
+        args.pop(0)
+    while args and args[0][0] in map(hy.mangle, ("&compiler", "&reader", "&key")):
+        args.pop(0)
     kwonlydefaults = argspec.kwonlydefaults.items() if argspec.kwonlydefaults else []
     kwonly = [
         arg
@@ -665,7 +668,7 @@ class HyDocumenter(PyDocumenter):
 
 class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
     option_spec = PyModuleDocumenter.option_spec.copy()
-    option_spec.update({"macros": members_option, "tags": bool_option})
+    option_spec.update({"macros": members_option, "readers": members_option})
 
     def add_directive_header(self, sig: str) -> None:
         return super().add_directive_header(sig)
@@ -753,27 +756,41 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                         % (safe_getattr(self.object, "__name__", "???"), name),
                         # type="autodoc",
                     )
-            macromembers = (
-                safe_getattr(self.object, "__macros__", {}).keys()
-                if self.options.macros is ALL
-                else (self.options.macros or [])
-            )
             macro_ret = []
-            macros = safe_getattr(self.object, "__macros__", {})
-            for name in macromembers:
-                macro_obj = macros.get(hy.mangle(name))
-                if macro_obj:
-                    setattr(macro_obj, "__macro__", True)
-                    macro_ret.append(ObjectMember(name, macro_obj))
-                else:
-                    logger.warning(
-                        __(
-                            "missing macro mentioned in :macros: option: "
-                            "module %s, attribute %s"
-                        )
-                        % (safe_getattr(self.object, "__name__", "???"), name),
-                        # type="autodoc",
+            for option, module_attr in (
+                ("macros", "__macros__"),
+                ("readers", "__reader_macros__"),
+            ):
+                macromembers = (
+                    safe_getattr(self.object, module_attr, {}).keys()
+                    if getattr(self.options, option) is ALL
+                    else getattr(self.options, option) or []
+                )
+                macros = safe_getattr(self.object, module_attr, {})
+                for name in macromembers:
+                    macro_obj = macros.get(
+                        hy.mangle(("#" if option == "readers" else "") + name)
                     )
+                    if macro_obj:
+                        setattr(
+                            macro_obj,
+                            "__reader_macro__" if option == "readers" else "__macro__",
+                            True,
+                        )
+                        macro_ret.append(ObjectMember(name, macro_obj))
+                    else:
+                        logger.warning(
+                            __(
+                                "missing macro mentioned in :%s: option: "
+                                "module %s, attribute %s"
+                            )
+                            % (
+                                option,
+                                safe_getattr(self.object, "__name__", "???"),
+                                name,
+                            ),
+                            # type="autodoc",
+                        )
 
             return False, member_ret + macro_ret
 
@@ -841,11 +858,9 @@ class HyTagDocumenter(HyFunctionDocumenter):
 
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):
-        return (
-            super().can_document_member(member, membername, isattr, parent)
-            and getattr(member, "__macros__", False)
-            and hy.unmangle(membername).startswith("#")
-        )
+        return super().can_document_member(
+            member, membername, isattr, parent
+        ) and getattr(member, "__reader_macro__", False)
 
     def import_object(self, raiseerror: bool = False) -> bool:
         """Import the object given by *self.modname* and *self.objpath* and set
