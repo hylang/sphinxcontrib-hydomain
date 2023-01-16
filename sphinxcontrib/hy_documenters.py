@@ -729,9 +729,14 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                 else (self.options.members or [])
             )
             memberlist = [
-                member
-                for member in map(hy.unmangle, memberlist)
-                if not member.startswith("_hy-anon-var")
+                hy.unmangle(member)
+                for member in memberlist
+                if not member.startswith("_hy_anon_var")
+                and not (
+                    self.options.members is ALL
+                    and hasattr(self.object, "__all__")
+                    and member not in self.object.__all__
+                )
             ]
             logger.debug(memberlist)
             member_ret = []
