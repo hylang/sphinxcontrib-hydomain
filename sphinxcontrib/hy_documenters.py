@@ -184,7 +184,7 @@ def import_object(
             attrname = objpath[0]
             mangled_name = hy.mangle(("#" if tag else "") + attrname)
             obj = getattr(obj, "__dict__", {}).get(
-                "__reader_macros__" if tag else "__macros__", {}
+                "_hy_reader_macros" if tag else "_hy_macros", {}
             )[mangled_name]
             logger.debug("[autodoc] => %r", obj)
             object_name = attrname
@@ -392,7 +392,7 @@ def get_module_members(module: Any):
     from sphinx.ext.autodoc import INSTANCEATTR
 
     members = {}
-    macros = safe_getattr(module, "__macros__", {})
+    macros = safe_getattr(module, "_hy_macros", {})
     is_core_module = "hy.core" in module.__name__
     reserved_hy_names = reserved.names()
 
@@ -406,7 +406,7 @@ def get_module_members(module: Any):
 
     for name, value in macros.items():
         try:
-            setattr(value, "__macro__", True)
+            setattr(value, "_hy_macro", True)
             name = hy.unmangle(name)
             if name not in reserved_hy_names or is_core_module:
                 members[name] = (name, value)
@@ -632,7 +632,7 @@ class HyDocumenter(PyDocumenter):
         memberdocumenters = []
         wanted_members = self.filter_members(members, want_all)
         # module_macros = [
-        #     member for member in members if getattr(member, "__macro__", False)
+        #     member for member in members if getattr(member, "_hy_macro", False)
         # ]
         for (mname, member, isattr) in wanted_members:
             classes = [
@@ -715,7 +715,7 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
             else:
                 ret = []
                 for name, value in members:
-                    is_macro = getattr(value, "__macro__", False)
+                    is_macro = getattr(value, "_hy_macro", False)
 
                     if (hy.mangle(name) in self.__all__) or (
                         is_macro and self.options.macros
@@ -758,8 +758,8 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                     )
             macro_ret = []
             for option, module_attr in (
-                ("macros", "__macros__"),
-                ("readers", "__reader_macros__"),
+                ("macros", "_hy_macros"),
+                ("readers", "_hy_reader_macros"),
             ):
                 macromembers = (
                     safe_getattr(self.object, module_attr, {}).keys()
@@ -774,7 +774,7 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                     if macro_obj:
                         setattr(
                             macro_obj,
-                            "__reader_macro__" if option == "readers" else "__macro__",
+                            "_hy_reader_macro" if option == "readers" else "_hy_macro",
                             True,
                         )
                         macro_ret.append(ObjectMember(name, macro_obj))
@@ -823,7 +823,7 @@ class HyMacroDocumenter(HyFunctionDocumenter):
     def can_document_member(cls, member, membername, isattr, parent):
         return super().can_document_member(
             member, membername, isattr, parent
-        ) and getattr(member, "__macro__", False)
+        ) and getattr(member, "_hy_macro", False)
 
     def import_object(self, raiseerror: bool = False) -> bool:
         """Import the object given by *self.modname* and *self.objpath* and set
@@ -860,7 +860,7 @@ class HyTagDocumenter(HyFunctionDocumenter):
     def can_document_member(cls, member, membername, isattr, parent):
         return super().can_document_member(
             member, membername, isattr, parent
-        ) and getattr(member, "__reader_macro__", False)
+        ) and getattr(member, "_hy_reader_macro", False)
 
     def import_object(self, raiseerror: bool = False) -> bool:
         """Import the object given by *self.modname* and *self.objpath* and set
