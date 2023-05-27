@@ -52,7 +52,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 hy_sexp_sig_re = re.compile(
     r"""
 ^\(
-    (?:\s*\^(?P<retann>\(.*?\) | .*?)\s+)?     # Optional: return annotation
+    (?:\s*\^(?P<retann>\(.*\) | [^\s]+?)\s+)? # Optional: return annotation
     (?P<module>[\w.]+::)?                       # Explicit module name
     (?P<classes>.*\.)?                         # Module and/or class name(s)
     (?P<object>.+?) \s*                        # Thing name
@@ -60,7 +60,7 @@ hy_sexp_sig_re = re.compile(
       (?:\[(?:\s*(?P<arguments>.*)\s*\]\))?) | # Optional: arguments
       (?:\)))
 $
-""",
+    """,
     re.VERBOSE,
 )
 hy_var_re = re.compile(r"^([\w.]*\.)?(.+?)$")
