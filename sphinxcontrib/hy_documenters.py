@@ -182,7 +182,7 @@ def import_object(
         object_name = None
         if macro or tag:
             attrname = objpath[0]
-            mangled_name = hy.mangle(("#" if tag else "") + attrname)
+            mangled_name = hy.mangle(attrname) if not tag else attrname
             obj = getattr(obj, "__dict__", {}).get(
                 "_hy_reader_macros" if tag else "_hy_macros", {}
             )[mangled_name]
@@ -768,9 +768,7 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                 )
                 macros = safe_getattr(self.object, module_attr, {})
                 for name in macromembers:
-                    macro_obj = macros.get(
-                        hy.mangle(("#" if option == "readers" else "") + name)
-                    )
+                    macro_obj = macros.get(hy.mangle(name) if option != "readers" else name)
                     if macro_obj:
                         setattr(
                             macro_obj,
