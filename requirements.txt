@@ -1,2 +1,0 @@
-Sphinx==3.5.4
-git+https://github.com/hylang/hy
