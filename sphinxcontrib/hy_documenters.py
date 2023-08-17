@@ -1,6 +1,5 @@
 import logging
 import re
-import sys
 import traceback
 from inspect import getfullargspec
 from itertools import islice, starmap
@@ -20,7 +19,7 @@ from sphinx.ext.autodoc import MethodDocumenter as PyMethodDocumenter
 from sphinx.ext.autodoc import ModuleDocumenter as PyModuleDocumenter
 from sphinx.ext.autodoc import ObjectMember
 from sphinx.ext.autodoc import PropertyDocumenter as PyPropertyDocumenter
-from sphinx.ext.autodoc import bool_option, members_option
+from sphinx.ext.autodoc import members_option
 from sphinx.ext.autodoc.directive import (
     AutodocDirective,
     DocumenterBridge,
