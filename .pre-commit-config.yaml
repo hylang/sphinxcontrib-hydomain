@@ -3,9 +3,9 @@ repos:
     rev: v2.21.0
     hooks:
     - id: pyupgrade
-      args: [--py36-plus]
+      args: [--py38-plus]
   - repo: https://github.com/pycqa/isort
-    rev: 5.8.0
+    rev: 5.12.0
     hooks:
       - id: isort
         name: isort (python)
@@ -16,7 +16,7 @@ repos:
         name: isort (pyi)
         types: [pyi]
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 23.7.0
     hooks:
     - id: black
   - repo: https://github.com/pre-commit/pre-commit-hooks
