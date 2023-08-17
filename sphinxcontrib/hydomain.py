@@ -182,45 +182,8 @@ def _pseudo_parse_arglist(signode: desc_signature, arglist: str) -> None:
     string literal (e.g. default argument value).
     """
     paramlist = desc_hyparameterlist()
-    # stack = [paramlist]  # type: List[Element]
-    try:
-        raise IndexError()
-        # for argument in arglist.split(','):
-        #     argument = argument.strip()
-        #     ends_open = ends_close = 0
-        #     while argument.startswith('['):
-        #         stack.append(addnodes.desc_optional())
-        #         stack[-2] += stack[-1]
-        #         argument = argument[1:].strip()
-        #     while argument.startswith(']'):
-        #         stack.pop()
-        #         argument = argument[1:].strip()
-        #     while argument.endswith(']') and not argument.endswith('[]'):
-        #         ends_close += 1
-        #         argument = argument[:-1].strip()
-        #     while argument.endswith('['):
-        #         ends_open += 1
-        #         argument = argument[:-1].strip()
-        #     if argument:
-        #         stack[-1] += addnodes.desc_parameter(argument, argument)
-        #     while ends_open:
-        #         stack.append(addnodes.desc_optional())
-        #         stack[-2] += stack[-1]
-        #         ends_open -= 1
-        #     while ends_close:
-        #         stack.pop()
-        #         ends_close -= 1
-        # if len(stack) != 1:
-        #     raise IndexError
-    except IndexError:
-        # if there are too few or too many elements on the stack, just give up
-        # and treat the whole argument list as one argument, discarding the
-        # already partially populated paramlist node
-        paramlist = desc_hyparameterlist()
-        paramlist += desc_hyparameter(arglist, arglist)
-        signode += paramlist
-    else:
-        signode += paramlist
+    paramlist += desc_hyparameter(arglist, arglist)
+    signode += paramlist
 
 
 def type_to_xref(text: str, env: BuildEnvironment = None) -> addnodes.pending_xref:
