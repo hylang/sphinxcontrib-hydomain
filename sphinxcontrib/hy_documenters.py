@@ -40,7 +40,7 @@ from sphinx.util.inspect import (
     isenumclass,
     safe_getattr,
 )
-from sphinx.util.typing import _stringify_py36, is_system_TypeVar
+from sphinx.util.typing import is_system_TypeVar
 
 logger = logging.getLogger("hy-domain")
 
@@ -261,10 +261,7 @@ def stringify(annotation: Any) -> str:
     elif annotation is Ellipsis:
         return "..."
 
-    if sys.version_info >= (3, 7):  # py37+
-        return _stringify_py37(annotation)
-    else:
-        return _stringify_py36(annotation)
+    return _stringify_py37(annotation)
 
 
 def _stringify_py37(annotation: Any) -> str:
