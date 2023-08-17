@@ -126,7 +126,7 @@ def get_object_members(subject: Any, objpath: List[str], attrgetter, analyzer=No
     if analyzer:
         # append instance attributes (cf. self.attr1) if analyzer knows
         namespace = ".".join(objpath)
-        for (ns, name) in analyzer.find_attr_docs():
+        for ns, name in analyzer.find_attr_docs():
             if namespace == ns and name not in members:
                 members[name] = Attribute(name, True, INSTANCEATTR)
 
@@ -631,7 +631,7 @@ class HyDocumenter(PyDocumenter):
         # module_macros = [
         #     member for member in members if getattr(member, "_hy_macro", False)
         # ]
-        for (mname, member, isattr) in wanted_members:
+        for mname, member, isattr in wanted_members:
             classes = [
                 cls
                 for cls in self.documenters.values()
