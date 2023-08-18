@@ -1,6 +1,5 @@
 import logging
 import re
-import sys
 import traceback
 from inspect import getfullargspec
 from itertools import islice, starmap
@@ -20,7 +19,7 @@ from sphinx.ext.autodoc import MethodDocumenter as PyMethodDocumenter
 from sphinx.ext.autodoc import ModuleDocumenter as PyModuleDocumenter
 from sphinx.ext.autodoc import ObjectMember
 from sphinx.ext.autodoc import PropertyDocumenter as PyPropertyDocumenter
-from sphinx.ext.autodoc import bool_option, members_option
+from sphinx.ext.autodoc import members_option
 from sphinx.ext.autodoc.directive import (
     AutodocDirective,
     DocumenterBridge,
@@ -126,7 +125,7 @@ def get_object_members(subject: Any, objpath: List[str], attrgetter, analyzer=No
     if analyzer:
         # append instance attributes (cf. self.attr1) if analyzer knows
         namespace = ".".join(objpath)
-        for (ns, name) in analyzer.find_attr_docs():
+        for ns, name in analyzer.find_attr_docs():
             if namespace == ns and name not in members:
                 members[name] = Attribute(name, True, INSTANCEATTR)
 
@@ -631,7 +630,7 @@ class HyDocumenter(PyDocumenter):
         # module_macros = [
         #     member for member in members if getattr(member, "_hy_macro", False)
         # ]
-        for (mname, member, isattr) in wanted_members:
+        for mname, member, isattr in wanted_members:
             classes = [
                 cls
                 for cls in self.documenters.values()
