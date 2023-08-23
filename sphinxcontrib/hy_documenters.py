@@ -488,7 +488,7 @@ class HyAutodocDirective(AutodocDirective):
 
         # record all filenames as dependencies -- this will at least
         # partially make automatic invalidation possible
-        for fn in params.filename_set:
+        for fn in params.record_dependencies:
             self.state.document.settings.record_dependencies.add(fn)
 
         result = parse_generated_content(self.state, params.result, documenter)
@@ -661,6 +661,8 @@ class HyDocumenter(PyDocumenter):
         self.env.temp_data["autodoc:module"] = None
         self.env.temp_data["autodoc:class"] = None
 
+    def get_object_members(self, want_all: bool) -> tuple[bool, list[ObjectMember]]:
+        return (False, [])
 
 class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
     option_spec = PyModuleDocumenter.option_spec.copy()

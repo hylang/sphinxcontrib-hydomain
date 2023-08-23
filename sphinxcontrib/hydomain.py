@@ -38,7 +38,6 @@ from sphinx.domains.python import (
 )
 from sphinx.environment import BuildEnvironment
 from sphinx.locale import _, __
-from sphinx.pycode.ast import parse as ast_parse
 from sphinx.roles import XRefRole
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.inspect import signature_from_ast
@@ -280,7 +279,7 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
             raise SyntaxError  # unsupported syntax
 
     try:
-        tree = ast_parse(annotation)
+        tree = ast.parse(annotation)
         result = unparse(tree)
         for i, node in enumerate(result):
             if isinstance(node, nodes.Text):
@@ -589,12 +588,7 @@ class HyModule(PyModule):
             target = nodes.target("", "", ids=[node_id], ismod=True)
             self.set_source_info(target)
 
-            # Assign old styled node_id not to break old hyperlinks (if possible)
-            # Note: Will removed in Sphinx-5.0  (RemovedInSphinx50Warning)
-            old_node_id = self.make_old_id(modname)
-            if node_id != old_node_id and old_node_id not in self.state.document.ids:
-                target["ids"].append(old_node_id)
-
+            node_id = make_id(self.env, self.state.document, "", modname)
             self.state.document.note_explicit_target(target)
 
             domain.note_module(
