@@ -766,7 +766,9 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
                 )
                 macros = safe_getattr(self.object, module_attr, {})
                 for name in macromembers:
-                    macro_obj = macros.get(hy.mangle(name) if option != "readers" else name)
+                    macro_obj = macros.get(
+                        hy.mangle(name) if option != "readers" else name
+                    )
                     if macro_obj:
                         setattr(
                             macro_obj,
