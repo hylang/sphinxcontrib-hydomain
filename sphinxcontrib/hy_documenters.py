@@ -664,6 +664,7 @@ class HyDocumenter(PyDocumenter):
     def get_object_members(self, want_all: bool) -> tuple[bool, list[ObjectMember]]:
         return (False, [])
 
+
 class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
     option_spec = PyModuleDocumenter.option_spec.copy()
     option_spec.update({"macros": members_option, "readers": members_option})
