@@ -29,8 +29,7 @@ from sphinx.ext.autodoc.directive import (
 from sphinx.ext.autodoc.importer import Attribute, import_module
 from sphinx.ext.autodoc.mock import mock
 from sphinx.locale import __
-from sphinx.util import inspect
-from sphinx.util import logging
+from sphinx.util import inspect, logging
 from sphinx.util.inspect import (
     getall,
     getannotations,
@@ -41,7 +40,7 @@ from sphinx.util.inspect import (
 )
 from sphinx.util.typing import is_system_TypeVar
 
-logger = logging.getLogger('sphinx.contrib.hylang.documenter')
+logger = logging.getLogger("sphinx.contrib.hylang.documenter")
 
 hy_ext_sig_re = re.compile(
     r"""

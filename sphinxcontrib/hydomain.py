@@ -46,7 +46,7 @@ from sphinx.util.nodes import make_id, make_refnode
 import sphinxcontrib.hy_documenters as doc
 
 # ** Consts
-logger = logging.getLogger('sphinx.contrib.hylang.domain')
+logger = logging.getLogger("sphinx.contrib.hylang.domain")
 
 hy_sexp_sig_re = re.compile(
     r"""
