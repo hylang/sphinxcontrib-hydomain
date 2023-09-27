@@ -14,7 +14,6 @@
 
 import ast
 import inspect
-import logging
 import re
 import sys
 from inspect import Parameter
@@ -39,6 +38,7 @@ from sphinx.domains.python import (
 from sphinx.environment import BuildEnvironment
 from sphinx.locale import _, __
 from sphinx.roles import XRefRole
+from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.inspect import signature_from_ast
 from sphinx.util.nodes import make_id, make_refnode
@@ -46,13 +46,13 @@ from sphinx.util.nodes import make_id, make_refnode
 import sphinxcontrib.hy_documenters as doc
 
 # ** Consts
-logging.getLogger().setLevel(logging.DEBUG)
+logger = logging.getLogger('sphinx.contrib.hylang.domain')
 
 hy_sexp_sig_re = re.compile(
     r"""
 ^\(
-    (?:\s*\^(?P<retann>\(.*\) | [^\s]+?)\s+)? # Optional: return annotation
-    (?P<module>[\w.]+::)?                       # Explicit module name
+    (?:\s*\^(?P<retann>\(.*\) | [^\s]+?)\s+)?  # Optional: return annotation
+    (?P<module>[\w.]+::)?                      # Explicit module name
     (?P<classes>.*\.)?                         # Module and/or class name(s)
     (?P<object>.+?) \s*                        # Thing name
     (?:                                        # Arguments/close or just close
@@ -404,7 +404,7 @@ class HyObject(PyObject):
                 # it supports to represent optional arguments (ex. "func(foo [, bar])")
                 _pseudo_parse_arglist(signode, arglist)
             except NotImplementedError as exc:
-                logging.warning("could not parse arglist (%r): %s", exc)
+                logger.warning("could not parse arglist (%r): %s", exc)
                 _pseudo_parse_arglist(signode, arglist)
         else:
             if self.needs_arglist():
@@ -888,7 +888,7 @@ class HyDomain(Domain):
     ) -> None:
         if name in self.objects:
             other = self.objects[name]
-            logging.warning(
+            logger.warning(
                 __(
                     "duplicate object description of %s, "
                     "other instance in %s, use :noindex: for one of them"
@@ -1027,7 +1027,7 @@ class HyDomain(Domain):
         if not matches:
             return None
         elif len(matches) > 1:
-            logging.warning(
+            logger.warning(
                 __("more than one target found for cross-reference %r: %s"),
                 target,
                 ", ".join(match[0] for match in matches),

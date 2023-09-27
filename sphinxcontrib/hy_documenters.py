@@ -1,4 +1,3 @@
-import logging
 import re
 import traceback
 from inspect import getfullargspec
@@ -31,6 +30,7 @@ from sphinx.ext.autodoc.importer import Attribute, import_module
 from sphinx.ext.autodoc.mock import mock
 from sphinx.locale import __
 from sphinx.util import inspect
+from sphinx.util import logging
 from sphinx.util.inspect import (
     getall,
     getannotations,
@@ -41,13 +41,13 @@ from sphinx.util.inspect import (
 )
 from sphinx.util.typing import is_system_TypeVar
 
-logger = logging.getLogger("hy-domain")
+logger = logging.getLogger('sphinx.contrib.hylang.documenter')
 
 hy_ext_sig_re = re.compile(
     r"""
 ^\(
     (?:\s*\^(?P<retann>\(.*?\) | .*?)\s+)?     # Optional: return annotation
-    (?P<module>[\w.]+::)?                       # Explicit module name
+    (?P<module>[\w.]+::)?                      # Explicit module name
     (?P<classes>.*\.)?                         # Module and/or class name(s)
     (?P<object>.+?) \s*                        # Thing name
     (?:                                        # Arguments/close or just close
@@ -60,8 +60,8 @@ $
 
 hy_var_sig_re = re.compile(
     r"""^ (?P<module>[\w.]+::)?   # Explicit module name
-          (?P<classes>.*\.)? # Module and/or class name(s)
-          (?P<object>.+?)        # thing name
+          (?P<classes>.*\.)?      # Module and/or class name(s)
+          (?P<object>.+?)         # thing name
         $""",
     re.VERBOSE,
 )
@@ -561,7 +561,7 @@ class HyDocumenter(PyDocumenter):
                 macro=isinstance(self, HyMacroDocumenter),
             )
         except Exception as exc:
-            logging.warning(
+            logger.warning(
                 ("error while formatting arguments for %s: %s"),
                 self.fullname,
                 exc,
