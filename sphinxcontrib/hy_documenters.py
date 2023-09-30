@@ -1,3 +1,4 @@
+import builtins
 import logging
 import re
 import traceback
@@ -7,7 +8,6 @@ from typing import Any, Callable, Dict, List, TypeVar
 
 import hy
 import hy.core.macros
-import hy.reserved as reserved
 from docutils.nodes import Node
 from sphinx.ext.autodoc import ALL
 from sphinx.ext.autodoc import AttributeDocumenter as PyAttributeDocumenter
@@ -390,7 +390,6 @@ def get_module_members(module: Any):
     members = {}
     macros = safe_getattr(module, "_hy_macros", {})
     is_core_module = "hy.core" in module.__name__
-    reserved_hy_names = reserved.names()
 
     for name in dir(module):
         try:
@@ -403,8 +402,8 @@ def get_module_members(module: Any):
     for name, value in macros.items():
         try:
             setattr(value, "_hy_macro", True)
-            name = hy.unmangle(name)
-            if name not in reserved_hy_names or is_core_module:
+            if name not in builtins._hy_macros or is_core_module:
+                name = hy.unmangle(name)
                 members[name] = (name, value)
         except AttributeError:
             continue
