@@ -667,12 +667,6 @@ class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
     option_spec = PyModuleDocumenter.option_spec.copy()
     option_spec.update({"macros": members_option, "readers": members_option})
 
-    def add_directive_header(self, sig: str) -> None:
-        return super().add_directive_header(sig)
-
-    def parse_name(self) -> bool:
-        return super().parse_name()
-
     def import_object(self, raiseerror: bool = False) -> bool:
         ret = super().import_object(raiseerror)
 
