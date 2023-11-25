@@ -14,7 +14,6 @@
 
 import ast
 import inspect
-import logging
 import re
 import sys
 from inspect import Parameter
@@ -38,8 +37,8 @@ from sphinx.domains.python import (
 )
 from sphinx.environment import BuildEnvironment
 from sphinx.locale import _, __
-from sphinx.pycode.ast import parse as ast_parse
 from sphinx.roles import XRefRole
+from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.inspect import signature_from_ast
 from sphinx.util.nodes import make_id, make_refnode
@@ -47,13 +46,13 @@ from sphinx.util.nodes import make_id, make_refnode
 import sphinxcontrib.hy_documenters as doc
 
 # ** Consts
-logging.getLogger().setLevel(logging.DEBUG)
+logger = logging.getLogger("sphinx.contrib.hylang.domain")
 
 hy_sexp_sig_re = re.compile(
     r"""
 ^\(
-    (?:\s*\^(?P<retann>\(.*\) | [^\s]+?)\s+)? # Optional: return annotation
-    (?P<module>[\w.]+::)?                       # Explicit module name
+    (?:\s*\^(?P<retann>\(.*\) | [^\s]+?)\s+)?  # Optional: return annotation
+    (?P<module>[\w.]+::)?                      # Explicit module name
     (?P<classes>.*\.)?                         # Module and/or class name(s)
     (?P<object>.+?) \s*                        # Thing name
     (?:                                        # Arguments/close or just close
@@ -280,7 +279,7 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
             raise SyntaxError  # unsupported syntax
 
     try:
-        tree = ast_parse(annotation)
+        tree = ast.parse(annotation)
         result = unparse(tree)
         for i, node in enumerate(result):
             if isinstance(node, nodes.Text):
@@ -405,7 +404,7 @@ class HyObject(PyObject):
                 # it supports to represent optional arguments (ex. "func(foo [, bar])")
                 _pseudo_parse_arglist(signode, arglist)
             except NotImplementedError as exc:
-                logging.warning("could not parse arglist (%r): %s", exc)
+                logger.warning("could not parse arglist (%r): %s", exc)
                 _pseudo_parse_arglist(signode, arglist)
         else:
             if self.needs_arglist():
@@ -589,12 +588,7 @@ class HyModule(PyModule):
             target = nodes.target("", "", ids=[node_id], ismod=True)
             self.set_source_info(target)
 
-            # Assign old styled node_id not to break old hyperlinks (if possible)
-            # Note: Will removed in Sphinx-5.0  (RemovedInSphinx50Warning)
-            old_node_id = self.make_old_id(modname)
-            if node_id != old_node_id and old_node_id not in self.state.document.ids:
-                target["ids"].append(old_node_id)
-
+            node_id = make_id(self.env, self.state.document, "", modname)
             self.state.document.note_explicit_target(target)
 
             domain.note_module(
@@ -894,7 +888,7 @@ class HyDomain(Domain):
     ) -> None:
         if name in self.objects:
             other = self.objects[name]
-            logging.warning(
+            logger.warning(
                 __(
                     "duplicate object description of %s, "
                     "other instance in %s, use :noindex: for one of them"
@@ -1033,7 +1027,7 @@ class HyDomain(Domain):
         if not matches:
             return None
         elif len(matches) > 1:
-            logging.warning(
+            logger.warning(
                 __("more than one target found for cross-reference %r: %s"),
                 target,
                 ", ".join(match[0] for match in matches),
