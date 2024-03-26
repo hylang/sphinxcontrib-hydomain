@@ -2,6 +2,7 @@ import builtins
 import logging
 import re
 import traceback
+import types
 from inspect import getfullargspec
 from itertools import islice, starmap
 from typing import Any, Callable, Dict, List, TypeVar
@@ -551,6 +552,9 @@ class HyDocumenter(PyDocumenter):
                     return False
 
     def format_signature(self, **kwargs: Any) -> str:
+        if type(self.object) is types.ModuleType:
+            return ""
+
         args = ""
         retann = ""
         try:
