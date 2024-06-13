@@ -1,5 +1,4 @@
 import builtins
-import logging
 import re
 import traceback
 import types
@@ -31,7 +30,7 @@ from sphinx.ext.autodoc.directive import (
 from sphinx.ext.autodoc.importer import Attribute, import_module
 from sphinx.ext.autodoc.mock import mock
 from sphinx.locale import __
-from sphinx.util import inspect
+from sphinx.util import inspect, logging
 from sphinx.util.inspect import (
     getall,
     getannotations,
@@ -42,13 +41,13 @@ from sphinx.util.inspect import (
 )
 from sphinx.util.typing import is_system_TypeVar
 
-logger = logging.getLogger("hy-domain")
+logger = logging.getLogger("sphinx.contrib.hylang.documenter")
 
 hy_ext_sig_re = re.compile(
     r"""
 ^\(
     (?:\s*\^(?P<retann>\(.*?\) | .*?)\s+)?     # Optional: return annotation
-    (?P<module>[\w.]+::)?                       # Explicit module name
+    (?P<module>[\w.]+::)?                      # Explicit module name
     (?P<classes>.*\.)?                         # Module and/or class name(s)
     (?P<object>.+?) \s*                        # Thing name
     (?:                                        # Arguments/close or just close
@@ -61,8 +60,8 @@ $
 
 hy_var_sig_re = re.compile(
     r"""^ (?P<module>[\w.]+::)?   # Explicit module name
-          (?P<classes>.*\.)? # Module and/or class name(s)
-          (?P<object>.+?)        # thing name
+          (?P<classes>.*\.)?      # Module and/or class name(s)
+          (?P<object>.+?)         # thing name
         $""",
     re.VERBOSE,
 )
@@ -488,7 +487,7 @@ class HyAutodocDirective(AutodocDirective):
 
         # record all filenames as dependencies -- this will at least
         # partially make automatic invalidation possible
-        for fn in params.filename_set:
+        for fn in params.record_dependencies:
             self.state.document.settings.record_dependencies.add(fn)
 
         result = parse_generated_content(self.state, params.result, documenter)
@@ -564,7 +563,7 @@ class HyDocumenter(PyDocumenter):
                 macro=isinstance(self, HyMacroDocumenter),
             )
         except Exception as exc:
-            logging.warning(
+            logger.warning(
                 ("error while formatting arguments for %s: %s"),
                 self.fullname,
                 exc,
@@ -664,16 +663,13 @@ class HyDocumenter(PyDocumenter):
         self.env.temp_data["autodoc:module"] = None
         self.env.temp_data["autodoc:class"] = None
 
+    def get_object_members(self, want_all: bool) -> tuple[bool, list[ObjectMember]]:
+        return (False, [])
+
 
 class HyModuleDocumenter(HyDocumenter, PyModuleDocumenter):
     option_spec = PyModuleDocumenter.option_spec.copy()
     option_spec.update({"macros": members_option, "readers": members_option})
-
-    def add_directive_header(self, sig: str) -> None:
-        return super().add_directive_header(sig)
-
-    def parse_name(self) -> bool:
-        return super().parse_name()
 
     def import_object(self, raiseerror: bool = False) -> bool:
         ret = super().import_object(raiseerror)
