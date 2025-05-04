@@ -1,3 +1,7 @@
+This package is half-finished and gets only a little maintenance, to
+allow building Hy and Hyrule's manuals. Please let us know if you're
+interested in maintaining it for real.
+
 # AutoDoc
 - [ ] Escape string optional parameters *
 - [x] Reserved names populating other modules randomly *
